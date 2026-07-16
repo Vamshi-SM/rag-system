@@ -1,0 +1,35 @@
+# --- Core ---
+python-dotenv>=1.0.1
+
+# --- Phase 2: Document loading ---
+pdfplumber>=0.11.4
+PyPDF2>=3.0.1
+python-docx>=1.1.2
+
+# --- Phase 3: Chunking ---
+langchain-text-splitters>=0.3.0
+tiktoken>=0.8.0
+
+# --- Phase 4: Embeddings ---
+requests>=2.32.3
+tqdm>=4.66.5
+
+# --- Phase 5: Vector database ---
+sqlite-vec>=0.1.6
+
+# --- Phase 6-8: Ingestion / Retrieval / RAG / LLM ---
+# No new dependencies required - reuses requests (Phase 4) for the
+# SLLM chat API and the standard library (hashlib, dataclasses) for
+# checksumming and response modeling.
+
+# --- Phase 9: REST API ---
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.9.0
+
+# --- Phase 10: Testing & validation ---
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+httpx>=0.27.0
+reportlab>=4.2.0
+
