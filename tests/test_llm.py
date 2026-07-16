@@ -41,7 +41,8 @@ class TestSLLMChat:
                 return None
 
             def json(self) -> dict:
-                return {"choices": [{"message": {"role": "assistant", "content": "OK"}}]}
+                # Ollama-format response (matches SharedLLM /api/chat endpoint)
+                return {"model": "m", "message": {"role": "assistant", "content": "OK"}, "done": True}
 
         def flaky_post(url, json, timeout):  # noqa: ANN001
             attempts["count"] += 1

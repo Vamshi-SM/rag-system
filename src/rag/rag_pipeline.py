@@ -156,4 +156,5 @@ class RAGPipeline:
             chunks_used=chunks,
             used_llm=True,
             elapsed_seconds=elapsed,
-        )
+            
+)

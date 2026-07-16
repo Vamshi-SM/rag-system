@@ -92,8 +92,8 @@ def main() -> None:
 
     vector_store = VectorStore(database_path=settings.database_path, default_top_k=settings.top_k)
     embedder = OllamaEmbedding(
-        api_key=settings.sllm_api_key,
-        base_url=settings.sllm_base_url,
+        api_key="",
+        base_url=settings.ollama_base_url,
         model=settings.embedding_model,
         batch_size=settings.embedding_batch_size,
         timeout=settings.embedding_timeout,

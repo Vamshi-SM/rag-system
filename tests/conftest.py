@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import settings
 from src.embeddings.qwen_embedding import QwenEmbedding
+from src.embeddings.ollama_embedding import OllamaEmbedding
 from src.llm.sllm import SLLMChat
 from src.vectordb.vector_store import VectorStore
 
@@ -117,13 +118,14 @@ def vector_store(db_path: Path):
 def patch_embedding_api(monkeypatch: pytest.MonkeyPatch):
     """Patch QwenEmbedding._call_api with a deterministic, offline fake."""
 
-    def fake_call_api(self: QwenEmbedding, texts: list[str]) -> list[list[float]]:
+    def fake_call_api(self, texts: list[str]) -> list[list[float]]:
         vectors = [_deterministic_vector(text) for text in texts]
-        if vectors and self._dimensions is None:
+        if vectors and getattr(self, "_dimensions", None) is None:
             self._dimensions = len(vectors[0])
         return vectors
 
     monkeypatch.setattr(QwenEmbedding, "_call_api", fake_call_api)
+    monkeypatch.setattr(OllamaEmbedding, "_call_api", fake_call_api)
     return fake_call_api
 
 

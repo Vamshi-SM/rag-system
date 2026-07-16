@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import settings
 from src.embeddings.ollama_embedding import OllamaEmbedding
-from src.llm.ollama_chat import OllamaChat
+from src.llm.sllm import SharedLLMChat
 from src.rag.rag_pipeline import RAGPipeline
 from src.rag.response import RAGResponse
 from src.retrieval.retriever import Retriever
@@ -52,8 +52,8 @@ def parse_args() -> argparse.Namespace:
 def build_pipeline() -> RAGPipeline:
     """Wire up the Phase 7/8 pipeline from Phase 2-5 components + config."""
     embedder = OllamaEmbedding(
-        api_key=settings.sllm_api_key,
-        base_url=settings.sllm_base_url,
+        api_key="",
+        base_url=settings.ollama_base_url,
         model=settings.embedding_model,
         timeout=settings.embedding_timeout,
         max_retries=settings.embedding_max_retries,
@@ -66,13 +66,19 @@ def build_pipeline() -> RAGPipeline:
         default_similarity_threshold=settings.similarity_threshold,
         candidate_multiplier=settings.retrieval_candidate_multiplier,
     )
-    llm = OllamaChat(
+    llm = SharedLLMChat(
         api_key=settings.sllm_api_key,
-        base_url=settings.sllm_base_url,
+        base_url=settings.chat_base_url,   # Ollama-compat endpoint for chat
         model=settings.chat_model,
         timeout=settings.request_timeout,
         max_retries=settings.llm_max_retries,
     )
+    print("\n========== LLM INFO ==========")
+    print("Class     :", type(llm))
+    print("Module    :", llm.__class__.__module__)
+    print("Model     :", llm.model)
+    print("Base URL  :", llm.base_url)
+    print("==============================\n")
     return RAGPipeline(
         retriever=retriever,
         llm=llm,

@@ -10,6 +10,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -69,6 +70,9 @@ class Settings:
             os.getenv("SLLM_BASE_URL", "https://api.sharedllm.com/openai/v1"),
         )
     )
+    ollama_base_url: str = field(
+        default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    )
     embedding_model: str = field(
         default_factory=lambda: os.getenv(
             "EMBEDDING_MODEL", os.getenv("CHAT_MODEL", "ollama/kimi-k2.7-code")
@@ -94,6 +98,16 @@ class Settings:
     chat_model: str = field(default_factory=lambda: os.getenv("CHAT_MODEL", "ollama/kimi-k2.7-code"))
     request_timeout: float = field(default_factory=lambda: _get_float("REQUEST_TIMEOUT", 60.0))
     llm_max_retries: int = field(default_factory=lambda: _get_int("LLM_MAX_RETRIES", 3))
+    #: Base URL for the chat LLM.  Defaults to the Ollama-compatible
+    #: endpoint (https://api.sharedllm.com/ollama).  Embeddings use
+    #: ``sllm_base_url`` which points at the OpenAI-compatible endpoint.
+    #: Override via ``SHAREDLLM_CHAT_BASE_URL``.
+    chat_base_url: str = field(
+        default_factory=lambda: os.getenv(
+            "SHAREDLLM_CHAT_BASE_URL",
+            os.getenv("SLLM_BASE_URL", "https://api.sharedllm.com/ollama"),
+        )
+    )
 
     # --- API security ---
     #: POST /ingest accepts a folder path from the caller. To prevent

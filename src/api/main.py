@@ -20,7 +20,9 @@ from typing import AsyncIterator
 # Allow running as `uvicorn src.api.main:app` from the project root.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI
+# pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.exceptions import register_exception_handlers
@@ -63,7 +65,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     vector_store = VectorStore(database_path=settings.database_path, default_top_k=settings.top_k)
     llm = SLLMChat(
         api_key=settings.sllm_api_key,
-        base_url=settings.sllm_base_url,
+        base_url=settings.chat_base_url,   # Ollama-compat endpoint for chat
         model=settings.chat_model,
         timeout=settings.request_timeout,
         max_retries=settings.llm_max_retries,
