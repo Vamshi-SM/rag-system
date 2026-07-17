@@ -12,7 +12,7 @@ from typing import Any, TypedDict
 
 from src.embeddings.base_embedding import BaseEmbedding, EmbeddingError
 from src.utils.logger import get_logger
-from src.vectordb.vector_store import VectorStore, VectorStoreError
+from src.vectordb.vector_store import SearchResult, VectorStore, VectorStoreError
 
 logger = get_logger(__name__)
 
@@ -30,6 +30,63 @@ class RetrievalError(Exception):
     API down, vector store error, etc.) as opposed to simply finding no
     relevant results, which is a normal, non-error outcome.
     """
+
+
+# Reciprocal Rank Fusion constant. A chunk at rank ``r`` (0-indexed) in a
+# given result list contributes ``1 / (RRF_K + r)`` to its fused score. 60 is
+# the value from the original RRF paper and works well in practice.
+RRF_K = 60
+
+
+def _fuse_rrf(
+    vector_results: list[SearchResult], keyword_results: list[SearchResult]
+) -> list[SearchResult]:
+    """Fuse two ranked result lists via Reciprocal Rank Fusion (RRF).
+
+    RRF is rank-based (not score-based), so it gracefully combines two
+    systems whose scores are on incomparable scales (cosine similarity in
+    [0, 1] vs. FTS5 BM25). A chunk appearing in both lists gets a higher
+    fused score than one in only one list, and rank position within each
+    list still matters.
+
+    The fused RRF score is used for *ordering* and is returned in the
+    ``similarity`` field (so the final ranked list's scores are monotonic
+    with its order). The original dense cosine similarity is preserved in a
+    ``cosine_similarity`` field so the retriever can apply a cosine-based
+    similarity threshold on its original [0, 1] scale — RRF scores are tiny
+    (~1/60) and would make a cosine threshold reject everything. Chunks that
+    only appeared in the keyword list carry their normalized BM25 similarity
+    as both ``similarity`` and ``cosine_similarity``.
+
+    Returns results sorted by descending fused RRF score.
+    """
+    fused: dict[str, dict[str, Any]] = {}
+
+    for rank, result in enumerate(vector_results):
+        key = result["id"]
+        rrf_score = 1.0 / (RRF_K + rank)
+        if key not in fused:
+            fused[key] = {"result": result, "rrf": 0.0, "cosine": result["similarity"]}
+        fused[key]["rrf"] += rrf_score
+
+    for rank, result in enumerate(keyword_results):
+        key = result["id"]
+        rrf_score = 1.0 / (RRF_K + rank)
+        if key not in fused:
+            # Only-keyword hit: use its normalized BM25 similarity as the
+            # cosine proxy for thresholding.
+            fused[key] = {"result": result, "rrf": 0.0, "cosine": result["similarity"]}
+        fused[key]["rrf"] += rrf_score
+
+    ordered = sorted(fused.values(), key=lambda item: item["rrf"], reverse=True)
+    fused_results: list[SearchResult] = []
+    for item in ordered:
+        result = dict(item["result"])
+        result["cosine_similarity"] = item["cosine"]
+        result["similarity"] = item["rrf"]  # fused score → drives ordering
+        result["distance"] = 1.0 - item["rrf"]
+        fused_results.append(result)
+    return fused_results
 
 
 class Retriever:
@@ -102,7 +159,7 @@ class Retriever:
             logger.warning("retrieve_with_scores called with an empty question")
             return []
 
-        k = top_k or self.default_top_k
+        k = top_k if top_k is not None else self.default_top_k
         threshold = (
             self.default_similarity_threshold
             if similarity_threshold is None
@@ -116,15 +173,41 @@ class Retriever:
             logger.error("Retrieval failed: could not embed question: %s", exc)
             raise RetrievalError(f"Could not embed question: {exc}") from exc
 
+        # --- Dense (vector) search ---
+        # Run the vector search first and let its errors propagate as
+        # RetrievalError (preserving the contract relied on by callers/tests)
+        # before attempting the keyword search below.
         try:
-            raw_results = self.vector_store.similarity_search(query_embedding, top_k=candidate_k)
+            vector_results = self.vector_store.similarity_search(
+                query_embedding, top_k=candidate_k
+            )
         except VectorStoreError as exc:
             logger.error("Retrieval failed: vector store search error: %s", exc)
             raise RetrievalError(f"Vector store search failed: {exc}") from exc
 
+        # --- Sparse (keyword) search, fused via Reciprocal Rank Fusion ---
+        # Keyword search is best-effort: if the FTS5 index is unavailable or
+        # the query fails, we degrade to pure-vector results rather than
+        # failing the whole retrieval.
+        keyword_results: list[SearchResult] = []
+        keyword_search = getattr(self.vector_store, "keyword_search", None)
+        if keyword_search is not None:
+            try:
+                keyword_results = keyword_search(question, limit=candidate_k)
+            except Exception as exc:  # noqa: BLE001 - keyword search must never break retrieval
+                logger.warning("Keyword search failed, using vector-only results: %s", exc)
+                keyword_results = []
+
+        fused_results = _fuse_rrf(vector_results, keyword_results)
+
+        # --- Threshold + metadata/filename filtering ---
+        # Threshold against the dense cosine similarity (the meaningful
+        # relevance signal on [0, 1]); rank by the fused RRF score so the
+        # returned `score` is monotonic with the final order.
         filtered: list[RetrievedChunk] = []
-        for result in raw_results:
-            if result["similarity"] < threshold:
+        for result in fused_results:
+            cosine = result.get("cosine_similarity", result["similarity"])
+            if cosine < threshold:
                 continue
             metadata = result["metadata"]
 
@@ -139,13 +222,18 @@ class Retriever:
                 {"text": result["text"], "score": result["similarity"], "metadata": metadata}
             )
 
+        # RRF already returns a rank order, but filtering can drop entries,
+        # so re-sort the surviving set by fused score for a stable top-k.
         filtered.sort(key=lambda chunk: chunk["score"], reverse=True)
         top_results = filtered[:k]
 
         logger.info(
-            "Retrieved %d/%d chunks for question (top_k=%d, threshold=%.2f)",
+            "Retrieved %d chunks for question "
+            "(vector=%d, keyword=%d, fused=%d, top_k=%d, threshold=%.2f)",
             len(top_results),
-            len(raw_results),
+            len(vector_results),
+            len(keyword_results),
+            len(fused_results),
             k,
             threshold,
         )

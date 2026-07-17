@@ -109,9 +109,6 @@ class QwenEmbedding(BaseEmbedding):
                         f"Retryable status {response.status_code}: {response.text[:200]}"
                     )
 
-                if getattr(response, "ok", None) is False:
-                    print("Status:", response.status_code)
-                    print("Response:", getattr(response, "text", ""))
                 response.raise_for_status()
                 body = response.json()
 

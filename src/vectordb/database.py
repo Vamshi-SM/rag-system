@@ -17,6 +17,7 @@ import sqlite_vec
 
 from src.utils.logger import get_logger
 from src.vectordb.schema import (
+    CREATE_CHUNKS_FTS_SQL,
     CREATE_CHUNKS_TABLE_SQL,
     CREATE_DB_META_TABLE_SQL,
     CREATE_DOCUMENT_REGISTRY_TABLE_SQL,
@@ -54,6 +55,8 @@ class Database:
         self.connection = sqlite3.connect(str(self.database_path), check_same_thread=False)
         self.connection.row_factory = sqlite3.Row
         self._load_vec_extension()
+        self._apply_pragmas()
+        self._fts_available = True
 
         logger.info("Connected to SQLite database at '%s'", self.database_path)
 
@@ -63,6 +66,37 @@ class Database:
         sqlite_vec.load(self.connection)
         self.connection.enable_load_extension(False)
         logger.debug("sqlite-vec extension loaded (version=%s)", sqlite_vec.__version__)
+
+    def _apply_pragmas(self) -> None:
+        """Apply production-oriented SQLite tuning pragmas to the connection.
+
+        * ``journal_mode=WAL`` — write-ahead logging allows concurrent readers
+          while a writer holds the lock, and is dramatically faster than the
+          default rollback journal for our read-heavy query workload.
+        * ``synchronous=NORMAL`` — the safe pairing with WAL; one fsync per
+          transaction instead of per write. (Never ``OFF`` — that risks
+          corruption on power loss.)
+        * ``busy_timeout`` — wait up to 5s for a locked DB instead of failing
+          immediately under contention.
+        * ``temp_store=MEMORY`` / ``mmap_size`` / ``cache_size`` — keep
+          temporary tables and the page cache in RAM and memory-map the DB
+          file for faster reads.
+        """
+        with self._lock:
+            for pragma, value in (
+                ("journal_mode", "WAL"),
+                ("synchronous", "NORMAL"),
+                ("busy_timeout", "5000"),
+                ("temp_store", "MEMORY"),
+                ("mmap_size", "268435456"),
+                ("cache_size", "-65536"),
+            ):
+                self.connection.execute(f"PRAGMA {pragma}={value}")
+
+    @property
+    def fts_available(self) -> bool:
+        """Whether the FTS5 full-text index is available for hybrid search."""
+        return self._fts_available
 
     def initialize_database(self) -> None:
         """Create the base (non-vector) schema if it doesn't already exist.
@@ -78,6 +112,21 @@ class Database:
             self.connection.execute(CREATE_DB_META_TABLE_SQL)
             self.connection.execute(CREATE_DOCUMENT_REGISTRY_TABLE_SQL)
             self.connection.execute(CREATE_INDEX_DOCUMENT_REGISTRY_CHECKSUM_SQL)
+
+        # FTS5 full-text index for hybrid retrieval. Created inside its own
+        # guarded block: on a minimal SQLite build without FTS5, we degrade
+        # gracefully to pure-vector search rather than crashing startup.
+        try:
+            with self._lock, self.connection:
+                self.connection.execute(CREATE_CHUNKS_FTS_SQL)
+        except sqlite3.OperationalError as exc:
+            self._fts_available = False
+            logger.warning(
+                "FTS5 unavailable (%s); hybrid search disabled, "
+                "falling back to pure-vector retrieval",
+                exc,
+            )
+
         logger.info("Database schema initialized")
 
     def execute(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:

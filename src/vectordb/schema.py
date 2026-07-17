@@ -14,6 +14,7 @@ from __future__ import annotations
 
 CHUNKS_TABLE = "chunks"
 VEC_TABLE = "chunks_vec"
+CHUNKS_FTS_TABLE = "chunks_fts"
 
 CREATE_CHUNKS_TABLE_SQL = f"""
 CREATE TABLE IF NOT EXISTS {CHUNKS_TABLE} (
@@ -59,6 +60,17 @@ def build_vec_table_sql(dimensions: int, distance_metric: str = "cosine") -> str
         f"embedding float[{dimensions}] distance_metric={distance_metric}"
         f");"
     )
+
+
+# Standalone (non-external-content) FTS5 table over chunk text. We index
+# ``text`` only (``filename`` is not a column on ``chunks`` — it lives in the
+# JSON metadata blob — so filename filtering stays in the retriever). Keeping
+# the rowid lets us JOIN back to ``chunks`` for the full row. Population and
+# deletion are handled explicitly by ``VectorStore`` to avoid the
+# ``INSERT OR REPLACE`` trigger edge cases of external-content FTS5 tables.
+CREATE_CHUNKS_FTS_SQL = (
+    f"CREATE VIRTUAL TABLE IF NOT EXISTS {CHUNKS_FTS_TABLE} USING fts5(text)"
+)
 
 
 # --------------------------------------------------------------------- #

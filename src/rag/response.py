@@ -69,9 +69,6 @@ class RAGResponse:
             "used_llm": self.used_llm,
             "elapsed_seconds": self.elapsed_seconds,
             "error": self.error,
-            "embedding_model": self.embedding_model,
-            "chat_model": self.chat_model,
-            "vector_database": self.vector_database,
         }
 
 

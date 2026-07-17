@@ -123,15 +123,7 @@ class SLLMChat(BaseLLM):
         for attempt in range(1, self.max_retries + 1):
             try:
                 response = self._session.post(url, json=payload, timeout=self.timeout)
-                print("\n========== SHAREDLLM ==========")
-                print("URL      :", url)
-                print("MODEL    :", self.model)
-                print("API KEY  :", self.api_key[:20] + "...")
-                print("===============================\n")
 
-                response = self._session.post(url, json=payload, timeout=self.timeout)
-
-                print("HTTP STATUS:", response.status_code)
                 # Treat rate-limit and server errors as retryable.
                 if response.status_code == 429 or response.status_code >= 500:
                     raise requests.exceptions.HTTPError(
@@ -148,8 +140,6 @@ class SLLMChat(BaseLLM):
                         f"Got keys: {list(body.keys())}"
                     )
 
-                print("Response model:", body.get("model"))
-                print("DONE:", body.get("done"))
                 return body["message"]["content"]
 
             except (
@@ -204,15 +194,10 @@ class SLLMChat(BaseLLM):
                 "temperature": self.temperature,
             },
         }
-        print("\n========== SHAREDLLM ==========")
-        print("URL   :", url)
-        print("MODEL :", self.model)
-        print("===============================\n")
 
         with self._session.post(
             url, json=payload, timeout=self.timeout, stream=True
         ) as response:
-            print("HTTP STATUS:", response.status_code)
             response.raise_for_status()
 
             for line in response.iter_lines(decode_unicode=True):

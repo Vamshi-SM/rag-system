@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import time
 
+
+
 from src.llm.base_llm import BaseLLM, LLMError
 from src.rag.prompt import build_prompt
 from src.rag.response import NO_CONTEXT_ANSWER, RAGResponse, build_sources
@@ -60,25 +62,32 @@ class RAGPipeline:
         and a populated ``error`` field, so a caller (e.g. an
         interactive CLI) can always display *something* useful.
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         question = (question or "").strip()
         if not question:
             return RAGResponse(
                 answer="Please ask a question.",
                 used_llm=False,
-                elapsed_seconds=time.time() - start_time,
+                elapsed_seconds=time.perf_counter() - start_time,
                 error="empty_question",
             )
 
         try:
+            retrieve_start = time.perf_counter()
+            
             chunks = self.retriever.retrieve_with_scores(
                 question,
-                top_k=top_k or self.top_k,
-                similarity_threshold=similarity_threshold or self.similarity_threshold,
+                top_k=top_k if top_k is not None else self.top_k,
+                similarity_threshold=(
+                    self.similarity_threshold
+                    if similarity_threshold is None
+                    else similarity_threshold
+                ),
                 metadata_filter=metadata_filter,
                 filename=filename,
             )
+            retrieve_end = time.perf_counter()
         except RetrievalError as exc:
             logger.error("RAG pipeline: retrieval failed for question '%s': %s", question, exc)
             return RAGResponse(
@@ -114,10 +123,14 @@ class RAGPipeline:
                 elapsed_seconds=time.time() - start_time,
             )
 
+        prompt_start = time.perf_counter()
         prompt = build_prompt(question, chunks)
+        prompt_end = time.perf_counter()
 
         try:
+            llm_start = time.perf_counter()
             answer_text = self.llm.generate(prompt)
+            llm_end = time.perf_counter()
         except LLMError as exc:
             logger.error("RAG pipeline: LLM generation failed for question '%s': %s", question, exc)
             return RAGResponse(
@@ -147,14 +160,20 @@ class RAGPipeline:
                 error=f"unexpected_llm_error: {exc}",
             )
 
-        elapsed = time.time() - start_time
+        elapsed = time.perf_counter() - start_time
         logger.info("RAG pipeline answered question in %.2fs (%d chunks used)", elapsed, len(chunks))
+        total = time.perf_counter() - start_time
 
+        print("\n========== PERFORMANCE ==========")
+        print(f"Retrieval      : {(retrieve_end - retrieve_start)*1000:.2f} ms")
+        print(f"Prompt Build   : {(prompt_end - prompt_start)*1000:.2f} ms")
+        print(f"LLM Generation : {(llm_end - llm_start)*1000:.2f} ms")
+        print(f"Total          : {total:.2f} s")
+        print("=================================\n")
         return RAGResponse(
             answer=answer_text.strip(),
             sources=build_sources(chunks),
             chunks_used=chunks,
             used_llm=True,
             elapsed_seconds=elapsed,
-            
-)
+        )

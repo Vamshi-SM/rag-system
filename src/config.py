@@ -81,6 +81,14 @@ class Settings:
     embedding_batch_size: int = field(default_factory=lambda: _get_int("EMBEDDING_BATCH_SIZE", 32))
     embedding_timeout: float = field(default_factory=lambda: _get_float("EMBEDDING_TIMEOUT", 30.0))
     embedding_max_retries: int = field(default_factory=lambda: _get_int("EMBEDDING_MAX_RETRIES", 3))
+    #: Number of embedding batches sent to the embedding API concurrently
+    #: during ingestion. The embedding stage is purely HTTP I/O (DB writes
+    #: happen afterward in ``insert_many``), so parallelizing batches cuts
+    #: ingestion wall-clock time roughly linearly up to the API's rate limit.
+    #: Set to 1 to keep the original strictly-sequential behavior.
+    embedding_concurrency: int = field(
+        default_factory=lambda: _get_int("EMBEDDING_CONCURRENCY", 4)
+    )
 
     # --- Vector DB / Retrieval ---
     top_k: int = field(default_factory=lambda: _get_int("TOP_K", 5))

@@ -207,8 +207,8 @@ class OllamaChat(BaseLLM):
         """
 
         return self._call_api(messages)
-    
-def stream(
+
+    def stream(
         self,
         messages: list[ChatMessage],
     ) -> Iterator[str]:
