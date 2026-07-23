@@ -74,10 +74,11 @@ class Settings:
         default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     )
     embedding_model: str = field(
-        default_factory=lambda: os.getenv(
-            "EMBEDDING_MODEL", os.getenv("CHAT_MODEL", "ollama/kimi-k2.7-code")
-        )
+    default_factory=lambda: os.getenv(
+        "EMBEDDING_MODEL",
+        "text-embedding-004",
     )
+)
     embedding_batch_size: int = field(default_factory=lambda: _get_int("EMBEDDING_BATCH_SIZE", 32))
     embedding_timeout: float = field(default_factory=lambda: _get_float("EMBEDDING_TIMEOUT", 30.0))
     embedding_max_retries: int = field(default_factory=lambda: _get_int("EMBEDDING_MAX_RETRIES", 3))

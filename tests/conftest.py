@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import settings
 from src.embeddings.qwen_embedding import QwenEmbedding
-from src.embeddings.ollama_embedding import OllamaEmbedding
+from src.embeddings.google_embedding import GoogleEmbedding
 from src.llm.sllm import SLLMChat
 from src.vectordb.vector_store import VectorStore
 

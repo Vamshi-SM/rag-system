@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import settings
-from src.embeddings.ollama_embedding import OllamaEmbedding
+from src.embeddings.google_embedding import GoogleEmbedding
 
 
 from src.rag.rag_pipeline import RAGPipeline
@@ -54,13 +54,11 @@ def parse_args() -> argparse.Namespace:
 
 def build_pipeline() -> RAGPipeline:
     """Wire up the Phase 7/8 pipeline from Phase 2-5 components + config."""
-    embedder = OllamaEmbedding(
-        api_key="",
-        base_url=settings.ollama_base_url,
-        model=settings.embedding_model,
-        timeout=settings.embedding_timeout,
-        max_retries=settings.embedding_max_retries,
-    )
+    embedder = GoogleEmbedding(
+    project_id=settings.gcp_project_id,
+    location=settings.gcp_location,
+    model=settings.embedding_model,
+)
     vector_store = VectorStore(database_path=settings.database_path, default_top_k=settings.top_k)
     retriever = Retriever(
         embedder=embedder,
