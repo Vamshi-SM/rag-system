@@ -101,7 +101,18 @@ class Settings:
     retrieval_candidate_multiplier: int = field(
         default_factory=lambda: _get_int("RETRIEVAL_CANDIDATE_MULTIPLIER", 4)
     )
+    # --- Google Cloud / Gemini ---
+    gcp_project_id: str = field(
+        default_factory=lambda: os.getenv("GCP_PROJECT_ID", "")
+)
 
+    gcp_location: str = field(
+        default_factory=lambda: os.getenv("GCP_LOCATION", "us-central1")
+)
+
+    gemini_model: str = field(
+        default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+)
     # --- LLM (SharedLLM chat API) ---
     chat_model: str = field(default_factory=lambda: os.getenv("CHAT_MODEL", "ollama/kimi-k2.7-code"))
     request_timeout: float = field(default_factory=lambda: _get_float("REQUEST_TIMEOUT", 60.0))

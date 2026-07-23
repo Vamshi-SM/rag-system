@@ -14,17 +14,20 @@ import sys
 import time
 from pathlib import Path
 
+
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import settings
 from src.embeddings.ollama_embedding import OllamaEmbedding
-from src.llm.sllm import SharedLLMChat
+
+
 from src.rag.rag_pipeline import RAGPipeline
 from src.rag.response import RAGResponse
 from src.retrieval.retriever import Retriever
 from src.utils.logger import get_logger
 from src.vectordb.vector_store import VectorStore
-
+from src.llm.gemini_chat import GeminiChat
 logger = get_logger(__name__)
 
 _EXIT_COMMANDS = {"exit", "quit"}
@@ -66,18 +69,15 @@ def build_pipeline() -> RAGPipeline:
         default_similarity_threshold=settings.similarity_threshold,
         candidate_multiplier=settings.retrieval_candidate_multiplier,
     )
-    llm = SharedLLMChat(
-        api_key=settings.sllm_api_key,
-        base_url=settings.chat_base_url,   # Ollama-compat endpoint for chat
-        model=settings.chat_model,
-        timeout=settings.request_timeout,
-        max_retries=settings.llm_max_retries,
-    )
+    llm = GeminiChat(
+    project_id=settings.gcp_project_id,
+)
     print("\n========== LLM INFO ==========")
     print("Class     :", type(llm))
     print("Module    :", llm.__class__.__module__)
     print("Model     :", llm.model)
-    print("Base URL  :", llm.base_url)
+    print("Project   :", settings.gcp_project_id)
+    print("Location  :", settings.gcp_location)
     print("==============================\n")
     return RAGPipeline(
         retriever=retriever,
