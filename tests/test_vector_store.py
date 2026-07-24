@@ -7,10 +7,14 @@ import pytest
 from src.vectordb.vector_store import VectorStore, VectorStoreError
 
 
+def _vec(base: list[float]) -> list[float]:
+    """Pad a small test vector to 768 dimensions to match the schema."""
+    return base + [0.0] * (768 - len(base))
+
 def _make_chunk(chunk_id: str, document_id: str, text: str, embedding: list[float]) -> dict:
     return {
         "text": text,
-        "embedding": embedding,
+        "embedding": _vec(embedding),  # Pad the embedding here
         "metadata": {
             "chunk_id": chunk_id,
             "document_id": document_id,
@@ -65,7 +69,8 @@ class TestVectorStoreCRUD:
 class TestSimilaritySearch:
     def test_exact_match_has_similarity_near_one(self, vector_store: VectorStore) -> None:
         vector_store.insert_many([_make_chunk("c1", "d1", "target", [1.0, 0.0, 0.0])])
-        results = vector_store.similarity_search([1.0, 0.0, 0.0], top_k=1)
+        # Wrap query in _vec()
+        results = vector_store.similarity_search(_vec([1.0, 0.0, 0.0]), top_k=1) 
         assert len(results) == 1
         assert results[0]["similarity"] == pytest.approx(1.0, abs=1e-4)
 
@@ -77,7 +82,8 @@ class TestSimilaritySearch:
                 _make_chunk("exact", "d1", "exact match", [1.0, 0.0, 0.0]),
             ]
         )
-        results = vector_store.similarity_search([1.0, 0.0, 0.0], top_k=3)
+        # Wrap query in _vec()
+        results = vector_store.similarity_search(_vec([1.0, 0.0, 0.0]), top_k=3)
         similarities = [r["similarity"] for r in results]
         assert similarities == sorted(similarities, reverse=True)
         assert results[0]["chunk_id"] == "exact"
@@ -86,17 +92,21 @@ class TestSimilaritySearch:
         vector_store.insert_many(
             [_make_chunk(f"c{i}", "d1", f"text {i}", [float(i), 0.0, 1.0]) for i in range(10)]
         )
-        results = vector_store.similarity_search([0.0, 0.0, 1.0], top_k=3)
+        # Wrap query in _vec()
+        results = vector_store.similarity_search(_vec([0.0, 0.0, 1.0]), top_k=3)
         assert len(results) == 3
 
     def test_similarity_search_on_empty_store_returns_empty(self, vector_store: VectorStore) -> None:
-        assert vector_store.similarity_search([1.0, 0.0, 0.0]) == []
+        # Wrap query in _vec()
+        assert vector_store.similarity_search(_vec([1.0, 0.0, 0.0])) == []
+
 
     def test_dimension_mismatch_raises(self, vector_store: VectorStore) -> None:
         vector_store.insert_many([_make_chunk("c1", "d1", "text", [1.0, 0.0, 0.0])])
         with pytest.raises(VectorStoreError):
-            vector_store.similarity_search([1.0, 0.0])  # wrong dimensionality
-
+            # Intentionally NOT padded to trigger the error
+            vector_store.similarity_search([1.0, 0.0])
+            
     def test_metadata_round_trips_through_json(self, vector_store: VectorStore) -> None:
         chunk = _make_chunk("c1", "d1", "text", [1.0, 0.0, 0.0])
         chunk["metadata"]["page"] = 7
@@ -143,7 +153,8 @@ class TestPersistence:
         store2 = VectorStore(database_path=db_path)
         try:
             assert store2.count() == 1
-            results = store2.similarity_search([1.0, 0.0, 0.0], top_k=1)
+            # Wrap query in _vec()
+            results = store2.similarity_search(_vec([1.0, 0.0, 0.0]), top_k=1)
             assert len(results) == 1
         finally:
             store2.close()

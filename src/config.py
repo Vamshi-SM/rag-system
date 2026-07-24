@@ -55,6 +55,12 @@ class Settings:
     database_path: Path = field(
         default_factory=lambda: Path(os.getenv("DATABASE_PATH", "data/processed/vectors.db"))
     )
+    database_url: str = field(
+    default_factory=lambda: os.getenv("DATABASE_URL", "")
+)
+    database_backend: str = field(
+    default_factory=lambda: os.getenv("DATABASE_BACKEND", "sqlite")
+)
 
     # --- Chunking ---
     chunk_size: int = field(default_factory=lambda: _get_int("CHUNK_SIZE", 700))

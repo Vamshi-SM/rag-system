@@ -1,4 +1,4 @@
-"""High-level vector store API backed by SQLite + sqlite-vec.
+"""High-level vector store API backed by SQLite + sqlite-vec / PostgreSQL + pgvector.
 
 This is the only module the rest of the pipeline (ingestion, query
 scripts) should import. It hides all raw SQL behind a small,
@@ -13,11 +13,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TypedDict
 
-import sqlite_vec
+from psycopg.types.json import Json
 
+from src.config import settings
 from src.embeddings.base_embedding import EmbeddedChunk
 from src.utils.logger import get_logger
 from src.vectordb.database import Database
+from src.vectordb.postgres_database import PostgresDatabase
 from src.vectordb.schema import (
     CHUNKS_FTS_TABLE,
     CHUNKS_TABLE,
@@ -25,6 +27,9 @@ from src.vectordb.schema import (
     VEC_TABLE,
     build_vec_table_sql,
 )
+
+if settings.database_backend == "sqlite":
+    import sqlite_vec
 
 logger = get_logger(__name__)
 
@@ -38,12 +43,7 @@ _FTS_TERM_RE = re.compile(r"[A-Za-z0-9]+")
 
 
 def _build_fts_query(query: str) -> str:
-    """Shape a natural-language query into an FTS5 MATCH expression.
-
-    Each alphanumeric term becomes a prefix query (``term*``), and the
-    terms are OR-joined so a match on any term surfaces the document.
-    Quoting each term also avoids FTS5 syntax errors on stray punctuation.
-    """
+    """Shape a natural-language query into an FTS5 MATCH expression."""
     terms = [m.group(0) for m in _FTS_TERM_RE.finditer(query) if len(m.group(0)) >= 2]
     if not terms:
         return ""
@@ -67,16 +67,22 @@ class VectorStoreError(Exception):
 
 
 class VectorStore:
-    """SQLite + sqlite-vec backed vector store.
+    """Backend-agnostic vector store (SQLite + sqlite-vec or PostgreSQL + pgvector).
 
     Args:
-        database_path: Path to the SQLite database file.
+        database_path: Path to the SQLite database file (ignored if Postgres).
         default_top_k: Default number of results returned by
             :meth:`similarity_search` when ``top_k`` isn't specified.
     """
 
     def __init__(self, database_path: str | Path, default_top_k: int = 5) -> None:
-        self.database = Database(database_path)
+        self.is_postgres = settings.database_backend == "postgres"
+        
+        if self.is_postgres:
+            self.database = PostgresDatabase(settings.database_url)
+        else:
+            self.database = Database(database_path)
+            
         self.default_top_k = default_top_k
         self._dimensions: int | None = None
         self.initialize_database()
@@ -90,17 +96,21 @@ class VectorStore:
         embedding dimensionality so the vec0 table can be re-created
         (or reused) consistently across process restarts.
         """
+        # Schema creation is fully delegated to the database implementations.
         self.database.initialize_database()
 
-        rows = self.database.query(
-            "SELECT value FROM db_meta WHERE key = ?", (_DIMENSIONS_META_KEY,)
-        )
-        if rows:
-            self._dimensions = int(rows[0]["value"])
-            self._ensure_vec_table(self._dimensions)
-            logger.info(
-                "Recovered existing vector table with dimensions=%d", self._dimensions
+        if self.is_postgres:
+            self._dimensions = 768  # Fixed dimensionality for Google embeddings
+        else:
+            rows = self.database.query(
+                "SELECT value FROM db_meta WHERE key = ?", (_DIMENSIONS_META_KEY,)
             )
+            if rows:
+                self._dimensions = int(rows[0]["value"])
+                self._ensure_vec_table(self._dimensions)
+                logger.info(
+                    "Recovered existing vector table with dimensions=%d", self._dimensions
+                )
 
     def _ensure_vec_table(self, dimensions: int) -> None:
         """Create the vec0 table for the given dimensionality if needed,
@@ -115,13 +125,14 @@ class VectorStore:
             )
 
         if self._dimensions is None:
+            # Reached only by SQLite; Postgres fixes _dimensions in initialize_database()
             self.database.execute(build_vec_table_sql(dimensions))
             self.database.execute(
                 "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)",
                 (_DIMENSIONS_META_KEY, str(dimensions)),
             )
+            logger.info("Created vector/chunks table with dimensions=%d", dimensions)
             self._dimensions = dimensions
-            logger.info("Created vec0 table with dimensions=%d", dimensions)
 
     # ------------------------------------------------------------------ #
     # Writes
@@ -132,15 +143,7 @@ class VectorStore:
         self.insert_many([embedded_chunk])
 
     def insert_many(self, embedded_chunks: list[EmbeddedChunk]) -> int:
-        """Insert many embedded chunks in a single transaction.
-
-        Args:
-            embedded_chunks: Chunks with vectors, as produced by an
-                embedding provider's ``embed_documents``.
-
-        Returns:
-            The number of rows actually inserted.
-        """
+        """Insert many embedded chunks in a single transaction."""
         if not embedded_chunks:
             return 0
 
@@ -164,28 +167,58 @@ class VectorStore:
                     )
                     continue
 
-                cursor = conn.execute(
-                    f"""
-                    INSERT OR REPLACE INTO {CHUNKS_TABLE}
-                        (id, chunk_id, document_id, text, metadata)
-                    VALUES (?, ?, ?, ?, ?)
-                    """,
-                    (row_id, chunk_id, document_id, chunk["text"], json.dumps(metadata)),
-                )
-                rowid = cursor.lastrowid
-
-                conn.execute(
-                    f"INSERT OR REPLACE INTO {VEC_TABLE} (rowid, embedding) VALUES (?, ?)",
-                    (rowid, sqlite_vec.serialize_float32(chunk["embedding"])),
-                )
-
-                # Keep the FTS5 full-text index in sync so hybrid (BM25)
-                # search sees the same text as the vector store.
-                if self.database.fts_available:
+                if self.is_postgres:
                     conn.execute(
-                        f"INSERT OR REPLACE INTO {CHUNKS_FTS_TABLE} (rowid, text) VALUES (?, ?)",
-                        (rowid, chunk["text"]),
+                        f"""
+                        INSERT INTO {CHUNKS_TABLE}
+                        (
+                            id,
+                            chunk_id,
+                            document_id,
+                            text,
+                            metadata,
+                            embedding
+                        )
+                        VALUES
+                        (%s,%s,%s,%s,%s,%s)
+                        ON CONFLICT(id)
+                        DO UPDATE SET
+                            chunk_id=EXCLUDED.chunk_id,
+                            document_id=EXCLUDED.document_id,
+                            text=EXCLUDED.text,
+                            metadata=EXCLUDED.metadata,
+                            embedding=EXCLUDED.embedding
+                        """,
+                        (
+                            row_id,
+                            chunk_id,
+                            document_id,
+                            chunk["text"],
+                            Json(metadata),
+                            chunk["embedding"],
+                        ),
                     )
+                else:
+                    cursor = conn.execute(
+                        f"""
+                        INSERT OR REPLACE INTO {CHUNKS_TABLE}
+                            (id, chunk_id, document_id, text, metadata)
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (row_id, chunk_id, document_id, chunk["text"], json.dumps(metadata)),
+                    )
+                    rowid = cursor.lastrowid
+
+                    conn.execute(
+                        f"INSERT OR REPLACE INTO {VEC_TABLE} (rowid, embedding) VALUES (?, ?)",
+                        (rowid, sqlite_vec.serialize_float32(chunk["embedding"])),
+                    )
+
+                    if self.database.fts_available:
+                        conn.execute(
+                            f"INSERT OR REPLACE INTO {CHUNKS_FTS_TABLE} (rowid, text) VALUES (?, ?)",
+                            (rowid, chunk["text"]),
+                        )
                 inserted += 1
 
         logger.info("Inserted %d/%d chunks into vector store", inserted, len(embedded_chunks))
@@ -198,21 +231,12 @@ class VectorStore:
     def similarity_search(
         self, query_embedding: list[float], top_k: int | None = None
     ) -> list[SearchResult]:
-        """Run a cosine-similarity nearest-neighbor search.
-
-        Args:
-            query_embedding: The embedding vector to search against.
-            top_k: Number of results to return. Defaults to
-                ``self.default_top_k`` (configurable via ``TOP_K``).
-
-        Returns:
-            Results ordered from most to least similar.
-        """
-        if self._dimensions is None:
+        """Run a cosine-similarity nearest-neighbor search."""
+        if self._dimensions is None and not self.is_postgres:
             logger.warning("similarity_search called on an empty vector store")
             return []
 
-        if len(query_embedding) != self._dimensions:
+        if self._dimensions is not None and len(query_embedding) != self._dimensions:
             raise VectorStoreError(
                 f"Query embedding has {len(query_embedding)} dimensions, "
                 f"expected {self._dimensions}"
@@ -220,38 +244,58 @@ class VectorStore:
 
         k = int(top_k or self.default_top_k)
 
-        # sqlite-vec's vec0 KNN queries require the `k` constraint to be
-        # a literal integer in the WHERE clause (a bound `?` parameter
-        # is not recognized as satisfying the KNN LIMIT requirement).
-        # `k` is always an int here, so this is not a SQL-injection risk.
-        rows = self.database.query(
-            f"""
-            SELECT
-                c.id            AS id,
-                c.chunk_id      AS chunk_id,
-                c.document_id   AS document_id,
-                c.text          AS text,
-                c.metadata      AS metadata,
-                v.distance      AS distance
-            FROM {VEC_TABLE} v
-            JOIN {CHUNKS_TABLE} c ON c.rowid = v.rowid
-            WHERE v.embedding MATCH ? AND k = {k}
-            ORDER BY v.distance
-            """,
-            (sqlite_vec.serialize_float32(query_embedding),),
-        )
+        if self.is_postgres:
+            rows = self.database.query(
+                f"""
+                SELECT
+                    id,
+                    chunk_id,
+                    document_id,
+                    text,
+                    metadata,
+                    embedding <=> %s::vector AS distance
+                FROM {CHUNKS_TABLE}
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
+                """,
+                (
+                    query_embedding,
+                    query_embedding,
+                    k,
+                ),
+            )
+        else:
+            rows = self.database.query(
+                f"""
+                SELECT
+                    c.id            AS id,
+                    c.chunk_id      AS chunk_id,
+                    c.document_id   AS document_id,
+                    c.text          AS text,
+                    c.metadata      AS metadata,
+                    v.distance      AS distance
+                FROM {VEC_TABLE} v
+                JOIN {CHUNKS_TABLE} c ON c.rowid = v.rowid
+                WHERE v.embedding MATCH ? AND k = {k}
+                ORDER BY v.distance
+                """,
+                (sqlite_vec.serialize_float32(query_embedding),),
+            )
 
         results: list[SearchResult] = []
         for row in rows:
-            # sqlite-vec's cosine distance = 1 - cosine_similarity
+            # pgvector cosine distance is in [0,2].
+            # Similarity is approximated as 1 - distance.
             similarity = 1.0 - row["distance"]
+            metadata = row["metadata"] if isinstance(row["metadata"], dict) else json.loads(row["metadata"])
+            
             results.append(
                 {
                     "id": row["id"],
                     "chunk_id": row["chunk_id"],
                     "document_id": row["document_id"],
                     "text": row["text"],
-                    "metadata": json.loads(row["metadata"]),
+                    "metadata": metadata,
                     "distance": row["distance"],
                     "similarity": similarity,
                 }
@@ -261,23 +305,10 @@ class VectorStore:
         return results
 
     def keyword_search(self, query: str, limit: int = 10) -> list[SearchResult]:
-        """Run a BM25 keyword search over chunk text via the FTS5 index.
-
-        Complements :meth:`similarity_search` (dense vector retrieval) by
-        catching exact-term / keyword matches that embedding similarity can
-        miss. The retriever fuses the two ranked lists via Reciprocal Rank
-        Fusion.
-
-        Args:
-            query: The natural-language query, matched against chunk text.
-            limit: Maximum number of hits to return.
-
-        Returns:
-            Results ordered from most to least BM25-relevant. ``similarity``
-            is a normalized score in ``[0, 1]`` derived from the FTS5 rank so
-            it's comparable with vector-similarity scores during fusion.
-            Returns an empty list if FTS5 is unavailable or nothing matches.
-        """
+        """Run a BM25 keyword search over chunk text via the FTS5 index."""
+        if self.is_postgres:
+            return []
+            
         if not self.database.fts_available:
             return []
 
@@ -309,15 +340,12 @@ class VectorStore:
                 """,
                 (fts_query, limit),
             )
-        except Exception as exc:  # noqa: BLE001 - malformed query etc. must not crash retrieval
+        except Exception as exc:  # noqa: BLE001
             logger.warning("keyword_search failed for query '%s': %s", query, exc)
             return []
 
         results: list[SearchResult] = []
         for row in rows:
-            # FTS5's bm25() returns negative values (more negative = more
-            # relevant). Normalize to a [0, 1] similarity-like score so it
-            # can be fused with cosine similarities by the retriever.
             rank = row["rank"] if row["rank"] is not None else 0.0
             similarity = 1.0 / (1.0 + abs(float(rank)))
             results.append(
@@ -326,7 +354,7 @@ class VectorStore:
                     "chunk_id": row["chunk_id"],
                     "document_id": row["document_id"],
                     "text": row["text"],
-                    "metadata": json.loads(row["metadata"]),
+                    "metadata": metadata,
                     "distance": abs(float(rank)),
                     "similarity": similarity,
                 }
@@ -345,44 +373,56 @@ class VectorStore:
     # ------------------------------------------------------------------ #
 
     def delete_document(self, document_id: str) -> int:
-        """Delete all chunks belonging to a given document ID.
-
-        Returns:
-            The number of chunks deleted.
-        """
-        rows = self.database.query(
-            f"SELECT rowid FROM {CHUNKS_TABLE} WHERE document_id = ?", (document_id,)
-        )
-        rowids = [row["rowid"] for row in rows]
-
-        if not rowids:
-            logger.info("No chunks found for document_id='%s'", document_id)
-            return 0
-
-        placeholders = ",".join("?" * len(rowids))
-        self.database.execute(
-            f"DELETE FROM {CHUNKS_TABLE} WHERE rowid IN ({placeholders})", tuple(rowids)
-        )
-        if self._dimensions is not None:
-            self.database.execute(
-                f"DELETE FROM {VEC_TABLE} WHERE rowid IN ({placeholders})", tuple(rowids)
+        """Delete all chunks belonging to a given document ID."""
+        if self.is_postgres:
+            rows = self.database.query(
+                f"DELETE FROM {CHUNKS_TABLE} WHERE document_id=%s RETURNING id",
+                (document_id,)
             )
-        if self.database.fts_available:
-            self.database.execute(
-                f"DELETE FROM {CHUNKS_FTS_TABLE} WHERE rowid IN ({placeholders})", tuple(rowids)
+            deleted_count = len(rows)
+            logger.info("Deleted %d chunks for document_id='%s'", deleted_count, document_id)
+            self.unregister_document(document_id)
+            return deleted_count
+            
+        else:
+            rows = self.database.query(
+                f"SELECT rowid FROM {CHUNKS_TABLE} WHERE document_id = ?", (document_id,)
             )
+            rowids = [row["rowid"] for row in rows]
 
-        logger.info("Deleted %d chunks for document_id='%s'", len(rowids), document_id)
-        self.unregister_document(document_id)
-        return len(rowids)
+            if not rowids:
+                logger.info("No chunks found for document_id='%s'", document_id)
+                return 0
+
+            placeholders = ",".join("?" * len(rowids))
+            self.database.execute(
+                f"DELETE FROM {CHUNKS_TABLE} WHERE rowid IN ({placeholders})", tuple(rowids)
+            )
+            if self._dimensions is not None:
+                self.database.execute(
+                    f"DELETE FROM {VEC_TABLE} WHERE rowid IN ({placeholders})", tuple(rowids)
+                )
+            if self.database.fts_available:
+                self.database.execute(
+                    f"DELETE FROM {CHUNKS_FTS_TABLE} WHERE rowid IN ({placeholders})", tuple(rowids)
+                )
+
+            logger.info("Deleted %d chunks for document_id='%s'", len(rowids), document_id)
+            self.unregister_document(document_id)
+            return len(rowids)
 
     def delete_all(self) -> None:
         """Delete every chunk and embedding from the store."""
         self.database.execute(f"DELETE FROM {CHUNKS_TABLE}")
-        if self._dimensions is not None:
-            self.database.execute(f"DELETE FROM {VEC_TABLE}")
-        if self.database.fts_available:
-            self.database.execute(f"DELETE FROM {CHUNKS_FTS_TABLE}")
+        if not self.is_postgres:
+            if self._dimensions is not None:
+                self.database.execute(f"DELETE FROM {VEC_TABLE}")
+            if self.database.fts_available:
+                self.database.execute(f"DELETE FROM {CHUNKS_FTS_TABLE}")
+            
+            # Reset dimensions for SQLite so the object knows it's empty
+            self._dimensions = None
+                
         self.database.execute(f"DELETE FROM {DOCUMENT_REGISTRY_TABLE}")
         logger.info("Deleted all chunks from vector store")
 
@@ -397,22 +437,21 @@ class VectorStore:
     # ------------------------------------------------------------------ #
     # Phase 6: document registry (dedup / incremental ingestion)
     # ------------------------------------------------------------------ #
-    # These methods are additive on top of the Phase 2-5 vector store -
-    # they don't change how `chunks` / `chunks_vec` behave, they only
-    # track which source files have already been ingested so re-running
-    # the ingestion pipeline is idempotent.
 
     def is_document_ingested(self, checksum: str) -> str | None:
         """Return the existing ``document_id`` if this checksum was
         already ingested, or ``None`` if it's new content.
-
-        Args:
-            checksum: A content hash (e.g. SHA-256) of the source file.
         """
-        rows = self.database.query(
-            f"SELECT document_id FROM {DOCUMENT_REGISTRY_TABLE} WHERE checksum = ?",
-            (checksum,),
-        )
+        if self.is_postgres:
+            rows = self.database.query(
+                f"SELECT document_id FROM {DOCUMENT_REGISTRY_TABLE} WHERE checksum = %s",
+                (checksum,),
+            )
+        else:
+            rows = self.database.query(
+                f"SELECT document_id FROM {DOCUMENT_REGISTRY_TABLE} WHERE checksum = ?",
+                (checksum,),
+            )
         return rows[0]["document_id"] if rows else None
 
     def register_document(
@@ -423,21 +462,34 @@ class VectorStore:
         source: str | None,
         chunk_count: int,
     ) -> None:
-        """Record that a document has been fully ingested.
-
-        Called once per source file, after its chunks have been
-        successfully embedded and stored, so a re-run of the ingestion
-        pipeline can skip it via :meth:`is_document_ingested`.
-        """
+        """Record that a document has been fully ingested."""
         ingested_at = datetime.now(timezone.utc).isoformat()
-        self.database.execute(
-            f"""
-            INSERT OR REPLACE INTO {DOCUMENT_REGISTRY_TABLE}
-                (document_id, checksum, filename, source, chunk_count, ingested_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (document_id, checksum, filename, source, chunk_count, ingested_at),
-        )
+        
+        if self.is_postgres:
+            self.database.execute(
+                f"""
+                INSERT INTO {DOCUMENT_REGISTRY_TABLE}
+                    (document_id, checksum, filename, source, chunk_count, ingested_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT(document_id)
+                DO UPDATE SET
+                    checksum=EXCLUDED.checksum,
+                    filename=EXCLUDED.filename,
+                    source=EXCLUDED.source,
+                    chunk_count=EXCLUDED.chunk_count,
+                    ingested_at=EXCLUDED.ingested_at
+                """,
+                (document_id, checksum, filename, source, chunk_count, ingested_at),
+            )
+        else:
+            self.database.execute(
+                f"""
+                INSERT OR REPLACE INTO {DOCUMENT_REGISTRY_TABLE}
+                    (document_id, checksum, filename, source, chunk_count, ingested_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (document_id, checksum, filename, source, chunk_count, ingested_at),
+            )
         logger.info(
             "Registered document '%s' (id=%s, %d chunks)", filename, document_id, chunk_count
         )
@@ -451,6 +503,11 @@ class VectorStore:
 
     def unregister_document(self, document_id: str) -> None:
         """Remove a document's registry entry (e.g. after deleting its chunks)."""
-        self.database.execute(
-            f"DELETE FROM {DOCUMENT_REGISTRY_TABLE} WHERE document_id = ?", (document_id,)
-        )
+        if self.is_postgres:
+            self.database.execute(
+                f"DELETE FROM {DOCUMENT_REGISTRY_TABLE} WHERE document_id = %s", (document_id,)
+            )
+        else:
+            self.database.execute(
+                f"DELETE FROM {DOCUMENT_REGISTRY_TABLE} WHERE document_id = ?", (document_id,)
+            )
