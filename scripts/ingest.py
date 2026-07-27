@@ -95,6 +95,7 @@ def main() -> None:
     project_id=settings.gcp_project_id,
     location=settings.gcp_location,
     model=settings.embedding_model,
+    batch_size=settings.embedding_batch_size,
 )
 
     try:

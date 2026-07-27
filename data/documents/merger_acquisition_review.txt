@@ -1,0 +1,179 @@
+APEX LEGAL SOLUTIONS
+MERGER & ACQUISITION REVIEW MEMORANDUM
+PROJECT PHOENIX - NOVATECH SYSTEMS / BLUEPEAK SOFTWARE STOCK PURCHASE
+
+CONFIDENTIAL - ATTORNEY WORK PRODUCT
+MATTER NUMBER: APX-2024-0201
+DOCUMENT NUMBER: DOC-MA-2024-201
+DATE: October 3, 2024
+PREPARED BY: James Thornton, Esq. (Partner, M&A Practice Group)
+CONTRIBUTING ATTORNEYS: Rachel Kim, Esq.; Marcus Chen, Esq.
+
+===============================================================================
+I. TRANSACTION OVERVIEW
+===============================================================================
+Acquirer: NovaTech Systems, Inc. (Client ID: CLT-8821)
+Target: BluePeak Software, Inc.
+Transaction Structure: Stock Purchase Agreement
+Signing Date: August 14, 2024
+Target Closing Date: October 31, 2024
+Purchase Price: $128,000,000 base enterprise value, adjusted for net
+working capital as of closing (estimated adjustment: +$1,200,000 based on
+June 30, 2024 balance sheet review)
+Financing: $60,000,000 cash on hand; $70,000,000 term loan facility with
+Orion Financial (Commitment Letter dated July 22, 2024, Contract No.
+OF-TL-2024-0158)
+Escrow Holdback: $3,500,000, 18-month survival period, per Due Diligence
+Report recommendation (Matter Number APX-2024-0201, Section X)
+
+-------------------------------------------------------------------------------
+II. DEFINITIVE AGREEMENT KEY TERMS
+-------------------------------------------------------------------------------
+Stock Purchase Agreement dated August 14, 2024 between NovaTech Systems,
+Inc. and the selling stockholders of BluePeak Software, Inc., including
+Cascade Ventures and Redline Capital Partners as majority Series B
+Preferred stockholders.
+
+Key Provisions:
+- Section 2.1: Purchase price mechanics and working capital true-up
+  (90-day post-closing adjustment period)
+- Section 4.6: Representations regarding intellectual property, including
+  specific disclosure schedule item addressing the open-source licensing
+  issue identified in Due Diligence Finding DD-006
+- Section 6.2: Closing conditions, including receipt of GreenStone
+  Logistics consent under Contract No. BP-GS-2021-0056 and landlord
+  consent from Meridian Property Group
+- Section 8.3: Indemnification provisions, capped at the escrow amount
+  except for fraud, willful misconduct, and breaches of fundamental
+  representations (capped at full purchase price)
+- Section 9.1: Non-compete and non-solicitation covenants for key
+  BluePeak Software executives, including Robert Nakamura (CEO) and
+  Priya Anand (General Counsel), for a period of 3 years post-closing
+
+-------------------------------------------------------------------------------
+III. CLOSING CONDITIONS STATUS TRACKER
+-------------------------------------------------------------------------------
+Condition 1: GreenStone Logistics consent to change of control under
+Contract No. BP-GS-2021-0056
+Status: RESOLVED - Consent obtained September 30, 2024, following
+negotiation of revised pricing terms favorable to BluePeak Software.
+
+Condition 2: Landlord consent from Meridian Property Group for Austin,
+TX headquarters lease assignment
+Status: RESOLVED - Consent obtained September 18, 2024.
+
+Condition 3: Repayment or assumption of existing BluePeak Software term
+loan (Contract No. OF-TL-2020-0091, outstanding balance $8,000,000) with
+Orion Financial
+Status: RESOLVED - Loan will be repaid at closing from transaction
+proceeds; payoff letter received October 1, 2024.
+
+Condition 4: HSR Act antitrust waiting period expiration
+Status: RESOLVED - Early termination granted September 5, 2024 (waiting
+period would otherwise have expired October 4, 2024).
+
+Condition 5: Resolution or indemnification of Texas Attorney General
+inquiry (Due Diligence Finding DD-008)
+Status: RESOLVED VIA INDEMNIFICATION - Specific indemnification provision
+added to Section 8.4 of the Stock Purchase Agreement; Texas Attorney
+General's office confirmed on September 12, 2024 that its inquiry has
+been closed without further action.
+
+Condition 6: Security incident remediation documentation (Due Diligence
+Finding DD-011)
+Status: RESOLVED - BluePeak Software's Chief Information Security
+Officer, Tanya Brooks, delivered a complete remediation report on
+September 27, 2024, confirming all identified vulnerabilities were
+patched and a third-party penetration test (conducted by Sterling
+Consulting) confirmed no residual exposure.
+
+-------------------------------------------------------------------------------
+IV. BOARD AND STOCKHOLDER APPROVALS
+-------------------------------------------------------------------------------
+NovaTech Systems Board of Directors approved the transaction unanimously
+at its meeting on October 3, 2024 (see Board Meeting Minutes, same date,
+for full record). BluePeak Software's stockholders, representing 94% of
+outstanding shares (including all Series B Preferred holders), executed
+written consents approving the transaction between August 20-25, 2024.
+
+-------------------------------------------------------------------------------
+V. VALUATION SUMMARY
+-------------------------------------------------------------------------------
+Valuation performed by Sterling Consulting, Financial Advisory Division,
+using a combination of discounted cash flow analysis and comparable
+transaction multiples (comparable transactions in the supply chain
+analytics software sector averaged 6.2x trailing twelve-month revenue).
+
+BluePeak Software Fiscal Year 2023 Revenue: $34,200,000
+BluePeak Software Fiscal Year 2023 EBITDA: $6,850,000
+Implied Multiple at $128,000,000 Enterprise Value: 3.7x revenue, 18.7x
+EBITDA
+
+Sterling Consulting's fairness opinion, delivered to the NovaTech Systems
+Board on October 1, 2024, concluded that the purchase price is fair to
+NovaTech Systems from a financial point of view.
+
+-------------------------------------------------------------------------------
+VI. POST-CLOSING INTEGRATION CONSIDERATIONS
+-------------------------------------------------------------------------------
+1. Open-source remediation (Due Diligence Finding DD-006) to be completed
+   within 90 days post-closing under supervision of NovaTech Systems'
+   engineering leadership, with legal check-ins at 30 and 60 days.
+2. Retention agreements for 12 key BluePeak Software employees to be
+   finalized prior to closing; NovaTech Systems HR department (Director:
+   Lisa Manning) coordinating retention bonus pool of $2,400,000.
+3. BluePeak Software's Canadian and UK subsidiaries will continue
+   operating as indirect wholly owned subsidiaries of NovaTech Systems
+   post-closing; no immediate restructuring planned.
+4. GDPR-related Standard Contractual Clauses gap identified in Due
+   Diligence Finding DD-010 to be remediated within 60 days post-closing,
+   coordinated with Redwood Healthcare given BluePeak Software's
+   subprocessor relationship on Project Meridian.
+
+-------------------------------------------------------------------------------
+VII. RISK ASSESSMENT (POST-SIGNING, PRE-CLOSING)
+-------------------------------------------------------------------------------
+Overall Risk Rating: LOW (downgraded from MODERATE at signing following
+resolution of all six closing conditions)
+
+Remaining risk relates primarily to integration execution rather than
+transaction risk. No conditions remain outstanding as of the date of
+this memorandum.
+
+-------------------------------------------------------------------------------
+VIII. RECOMMENDATIONS
+-------------------------------------------------------------------------------
+1. Proceed to closing on October 31, 2024 as scheduled.
+2. Finalize retention agreements no later than October 25, 2024.
+3. Schedule 30-day post-closing integration check-in for November 30,
+   2024 to review open-source remediation progress and GDPR SCC
+   implementation.
+4. Coordinate with Redwood Healthcare's outside counsel regarding the
+   Project Meridian subprocessor relationship transition, if any
+   subprocessor terms require amendment following the change of control.
+
+-------------------------------------------------------------------------------
+IX. FEES AND INVOICING
+-------------------------------------------------------------------------------
+Invoice INV-APX-22015 (August 2024): $128,400.00 - Due diligence and term
+sheet negotiation
+Invoice INV-APX-22340 (September 2024): $164,750.00 - Definitive
+agreement drafting and negotiation, closing condition satisfaction
+Invoice INV-APX-22590 (October 2024, projected): $95,000.00 - Closing
+coordination and post-closing integration support
+
+Total Estimated Fees for Project Phoenix: $388,150.00
+
+-------------------------------------------------------------------------------
+X. INTERNAL COMMENTS
+-------------------------------------------------------------------------------
+[James Thornton, 2024-10-03]: Clean path to closing. All six conditions
+resolved ahead of schedule. Recommend client proceed to formal closing
+call on October 31, 2024.
+
+[Rachel Kim, 2024-10-03]: Noting for the file that this due diligence
+process also surfaced useful information for Redwood Healthcare's Project
+Meridian compliance work given the shared vendor relationship with
+BluePeak Software. Coordinating with Elena Rodriguez on that overlap.
+
+END OF DOCUMENT - DOC-MA-2024-201

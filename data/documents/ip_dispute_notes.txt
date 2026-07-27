@@ -1,0 +1,102 @@
+APEX LEGAL SOLUTIONS
+INTERNAL CASE NOTES - INTELLECTUAL PROPERTY DISPUTE
+CONFIDENTIAL - ATTORNEY WORK PRODUCT
+
+Matter Number: MAT-2026-0417
+Case ID: IP-DISP-4471
+Client ID: CLI-10029 (NovaTech Systems)
+Opposing Party: Quantum Robotics, Inc.
+Court: United States District Court for the Northern District of California
+Case Caption: NovaTech Systems, Inc. v. Quantum Robotics, Inc.
+Docket Number: 3:26-cv-04521-JSC
+Filing Date: February 11, 2026
+Assigned Partner: Sarah Whitfield, Esq. (s.whitfield@apexlegalsolutions.com)
+Associate Attorney: Marcus Chen, Esq. (m.chen@apexlegalsolutions.com)
+Paralegal: Denise Ortiz
+
+Client Contact: Michael Torres, Chief Technology Officer, NovaTech Systems
+Client Address: 4400 Innovation Parkway, Suite 900, San Jose, CA 95134
+Client Phone: (408) 555-0192
+Client Email: m.torres@novatechsystems.com
+
+NATURE OF DISPUTE
+NovaTech Systems alleges that Quantum Robotics, Inc. willfully infringed
+U.S. Patent No. 11,982,347 ("Autonomous Navigation Correction System"),
+which underlies core technology developed as part of Project Falconstrike,
+a joint robotics initiative between NovaTech Systems and Falcon Aerospace.
+The patent was granted on March 4, 2025, and covers adaptive path-correction
+algorithms used in autonomous ground vehicles.
+
+BACKGROUND
+1. NovaTech Systems filed the original patent application (Serial No.
+   17/554,209) on September 18, 2023.
+2. Quantum Robotics released its "PathSense Pro" navigation module on
+   October 2, 2025, allegedly incorporating substantially similar
+   correction algorithms.
+3. Internal engineering review (memo dated November 14, 2025) concluded
+   there is a 78% functional overlap between the two systems.
+4. Cease-and-desist letter sent to Quantum Robotics on December 3, 2025;
+   no response received within the 30-day window.
+
+KEY PERSONNEL
+- Michael Torres, CTO, NovaTech Systems - lead inventor of record
+- Dr. Anika Weller, Senior Engineer, NovaTech Systems - co-inventor
+- Sarah Whitfield, Esq., Apex Legal Solutions - lead counsel
+- Marcus Chen, Esq., Apex Legal Solutions - associate counsel
+- Gregory Lin, General Counsel, Quantum Robotics, Inc. (opposing counsel)
+- Rachel Nguyen, Esq., Blackwell & Ferris LLP (outside counsel for Quantum Robotics)
+
+RELEVANT STATUTES AND LEGAL REFERENCES
+- 35 U.S.C. § 271 (Infringement of Patent)
+- 35 U.S.C. § 284 (Damages)
+- 35 U.S.C. § 285 (Attorney Fees - exceptional cases)
+- Markman v. Westview Instruments, Inc., 517 U.S. 370 (1996)
+
+INVESTIGATION NOTES
+- Forensic code comparison ordered from third-party expert firm,
+  Castellan Forensics, invoice CSF-88213, dated January 20, 2026.
+- Preliminary report indicates substantial similarity in the correction-
+  vector calculation module (Section 4.2 of Quantum Robotics' source code).
+- Deposition of Dr. Anika Weller scheduled for August 19, 2026.
+- Deposition of Quantum Robotics lead engineer, Peter Alvarez, scheduled
+  for September 2, 2026.
+- Discovery request served on Quantum Robotics on March 15, 2026, seeking
+  source code repositories dated between June 2024 and October 2025.
+
+RISK ASSESSMENT
+Risk Level: HIGH
+Likelihood of Success on Merits: Moderate-to-High (65-70%)
+Estimated Damages Exposure (if NovaTech prevails): $18,400,000 - $26,750,000
+Estimated Litigation Cost through Trial: $3,200,000
+Settlement Range Under Consideration: $9,000,000 - $12,500,000
+
+INTERNAL NOTES
+Client has expressed strong preference for injunctive relief over monetary
+damages, citing concerns about Quantum Robotics' continued market entry
+into the autonomous logistics sector shared with GreenStone Logistics,
+a NovaTech strategic partner. Sarah Whitfield noted in the March 22, 2026
+strategy call that a preliminary injunction motion should be filed no
+later than May 1, 2026, to preserve competitive positioning ahead of
+NovaTech's Q3 product launch.
+
+ACTION ITEMS
+1. Marcus Chen to finalize preliminary injunction brief by April 20, 2026.
+2. Denise Ortiz to compile exhibit binder for Markman hearing by June 1, 2026.
+3. Sarah Whitfield to schedule mediation conference with Quantum Robotics
+   counsel before August 30, 2026.
+4. Follow up with Castellan Forensics on supplemental code analysis by
+   April 30, 2026.
+5. Coordinate with patent prosecution team (see patent_application_review.txt)
+   regarding related continuation application, Serial No. 18/102,447.
+
+UPCOMING DEADLINES
+- Claim Construction Brief Due: July 10, 2026
+- Markman Hearing: August 5, 2026
+- Close of Fact Discovery: October 15, 2026
+- Expert Discovery Deadline: December 1, 2026
+- Trial Date (estimated): March 2027
+
+NEXT REVIEW DATE: August 12, 2026
+STATUS: ACTIVE - HIGH PRIORITY
+
+END OF DOCUMENT
