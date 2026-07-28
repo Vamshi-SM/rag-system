@@ -2,6 +2,7 @@ from google import genai
 from google.genai import types
 
 from src.llm.base_llm import BaseLLM, ChatMessage, LLMError
+from src.utils.profiler import measure
 
 
 class GeminiChat(BaseLLM):
@@ -16,11 +17,18 @@ class GeminiChat(BaseLLM):
 
     def generate(self, prompt: str) -> str:
         try:
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-            )
-            return response.text
+            # Stage 6 = the network round-trip to Gemini (model inference +
+            # transport); stage 7 = extracting the text from the returned
+            # response object. They're one logical call but split here so the
+            # summary can show how much (if any) of LLM time is local parsing
+            # vs. the actual remote request.
+            with measure("6. LLM call (Gemini generate_content)"):
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                )
+            with measure("7. receive/extract response"):
+                return response.text
         except Exception as e:
             raise LLMError(str(e))
 

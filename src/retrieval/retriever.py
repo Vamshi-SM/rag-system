@@ -12,6 +12,7 @@ from typing import Any, TypedDict
 
 from src.embeddings.base_embedding import BaseEmbedding, EmbeddingError
 from src.utils.logger import get_logger
+from src.utils.profiler import measure
 from src.vectordb.vector_store import SearchResult, VectorStore, VectorStoreError
 
 logger = get_logger(__name__)
@@ -168,7 +169,8 @@ class Retriever:
         candidate_k = k * self.candidate_multiplier if (metadata_filter or filename) else k
 
         try:
-            query_embedding = self.embedder.embed(question)
+            with measure("2. query embedding"):
+                query_embedding = self.embedder.embed(question)
         except EmbeddingError as exc:
             logger.error("Retrieval failed: could not embed question: %s", exc)
             raise RetrievalError(f"Could not embed question: {exc}") from exc
@@ -178,9 +180,10 @@ class Retriever:
         # RetrievalError (preserving the contract relied on by callers/tests)
         # before attempting the keyword search below.
         try:
-            vector_results = self.vector_store.similarity_search(
-                query_embedding, top_k=candidate_k
-            )
+            with measure("3. vector similarity search"):
+                vector_results = self.vector_store.similarity_search(
+                    query_embedding, top_k=candidate_k
+                )
         except VectorStoreError as exc:
             logger.error("Retrieval failed: vector store search error: %s", exc)
             raise RetrievalError(f"Vector store search failed: {exc}") from exc
@@ -193,39 +196,42 @@ class Retriever:
         keyword_search = getattr(self.vector_store, "keyword_search", None)
         if keyword_search is not None:
             try:
-                keyword_results = keyword_search(question, limit=candidate_k)
+                with measure("3b. keyword (FTS5) search"):
+                    keyword_results = keyword_search(question, limit=candidate_k)
             except Exception as exc:  # noqa: BLE001 - keyword search must never break retrieval
                 logger.warning("Keyword search failed, using vector-only results: %s", exc)
                 keyword_results = []
 
-        fused_results = _fuse_rrf(vector_results, keyword_results)
+        with measure("4a. RRF fusion"):
+            fused_results = _fuse_rrf(vector_results, keyword_results)
 
         # --- Threshold + metadata/filename filtering ---
         # Threshold against the dense cosine similarity (the meaningful
         # relevance signal on [0, 1]); rank by the fused RRF score so the
         # returned `score` is monotonic with the final order.
-        filtered: list[RetrievedChunk] = []
-        for result in fused_results:
-            cosine = result.get("cosine_similarity", result["similarity"])
-            if cosine < threshold:
-                continue
-            metadata = result["metadata"]
+        with measure("4b. filter + rank chunks"):
+            filtered: list[RetrievedChunk] = []
+            for result in fused_results:
+                cosine = result.get("cosine_similarity", result["similarity"])
+                if cosine < threshold:
+                    continue
+                metadata = result["metadata"]
 
-            if filename and metadata.get("filename") != filename:
-                continue
-            if metadata_filter and not all(
-                metadata.get(key) == value for key, value in metadata_filter.items()
-            ):
-                continue
+                if filename and metadata.get("filename") != filename:
+                    continue
+                if metadata_filter and not all(
+                    metadata.get(key) == value for key, value in metadata_filter.items()
+                ):
+                    continue
 
-            filtered.append(
-                {"text": result["text"], "score": result["similarity"], "metadata": metadata}
-            )
+                filtered.append(
+                    {"text": result["text"], "score": result["similarity"], "metadata": metadata}
+                )
 
-        # RRF already returns a rank order, but filtering can drop entries,
-        # so re-sort the surviving set by fused score for a stable top-k.
-        filtered.sort(key=lambda chunk: chunk["score"], reverse=True)
-        top_results = filtered[:k]
+            # RRF already returns a rank order, but filtering can drop entries,
+            # so re-sort the surviving set by fused score for a stable top-k.
+            filtered.sort(key=lambda chunk: chunk["score"], reverse=True)
+            top_results = filtered[:k]
 
         logger.info(
             "Retrieved %d chunks for question "

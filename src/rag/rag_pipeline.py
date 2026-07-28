@@ -12,13 +12,12 @@ from __future__ import annotations
 
 import time
 
-
-
 from src.llm.base_llm import BaseLLM, LLMError
 from src.rag.prompt import build_prompt
 from src.rag.response import NO_CONTEXT_ANSWER, RAGResponse, build_sources
 from src.retrieval.retriever import Retriever, RetrievalError
 from src.utils.logger import get_logger
+from src.utils.profiler import Profiler, measure, use_profiler
 
 logger = get_logger(__name__)
 
@@ -63,113 +62,111 @@ class RAGPipeline:
         interactive CLI) can always display *something* useful.
         """
         start_time = time.perf_counter()
+        profiler = Profiler()
 
-        question = (question or "").strip()
-        if not question:
-            return RAGResponse(
-                answer="Please ask a question.",
-                used_llm=False,
-                elapsed_seconds=time.perf_counter() - start_time,
-                error="empty_question",
-            )
+        with use_profiler(profiler):
+            with measure("1. load user query"):
+                question = (question or "").strip()
 
-        try:
-            retrieve_start = time.perf_counter()
-            
-            chunks = self.retriever.retrieve_with_scores(
-                question,
-                top_k=top_k if top_k is not None else self.top_k,
-                similarity_threshold=(
-                    self.similarity_threshold
-                    if similarity_threshold is None
-                    else similarity_threshold
-                ),
-                metadata_filter=metadata_filter,
-                filename=filename,
-            )
-            retrieve_end = time.perf_counter()
-        except RetrievalError as exc:
-            logger.error("RAG pipeline: retrieval failed for question '%s': %s", question, exc)
-            return RAGResponse(
-                answer=(
-                    "I wasn't able to search the document store right now "
-                    "(a retrieval error occurred). Please try again shortly."
-                ),
-                used_llm=False,
-                elapsed_seconds=time.time() - start_time,
-                error=f"retrieval_error: {exc}",
-            )
-        except Exception as exc:  # noqa: BLE001 - last-resort safety net; never crash the pipeline
-            logger.exception(
-                "RAG pipeline: unexpected retrieval failure for question '%s': %s", question, exc
-            )
-            return RAGResponse(
-                answer=(
-                    "Something went wrong while searching the document store. "
-                    "Please try again shortly."
-                ),
-                used_llm=False,
-                elapsed_seconds=time.time() - start_time,
-                error=f"unexpected_retrieval_error: {exc}",
-            )
+            if not question:
+                return RAGResponse(
+                    answer="Please ask a question.",
+                    used_llm=False,
+                    elapsed_seconds=time.perf_counter() - start_time,
+                    error="empty_question",
+                )
 
-        if not chunks:
-            logger.info("RAG pipeline: no chunks retrieved for question '%s'", question)
-            return RAGResponse(
-                answer=NO_CONTEXT_ANSWER,
-                sources=[],
-                chunks_used=[],
-                used_llm=False,
-                elapsed_seconds=time.time() - start_time,
-            )
+            try:
+                with measure("2-4. retrieval (embed + search + rank)"):
+                    chunks = self.retriever.retrieve_with_scores(
+                        question,
+                        top_k=top_k if top_k is not None else self.top_k,
+                        similarity_threshold=(
+                            self.similarity_threshold
+                            if similarity_threshold is None
+                            else similarity_threshold
+                        ),
+                        metadata_filter=metadata_filter,
+                        filename=filename,
+                    )
+            except RetrievalError as exc:
+                logger.error("RAG pipeline: retrieval failed for question '%s': %s", question, exc)
+                return RAGResponse(
+                    answer=(
+                        "I wasn't able to search the document store right now "
+                        "(a retrieval error occurred). Please try again shortly."
+                    ),
+                    used_llm=False,
+                    elapsed_seconds=time.perf_counter() - start_time,
+                    error=f"retrieval_error: {exc}",
+                )
+            except Exception as exc:  # noqa: BLE001 - last-resort safety net; never crash the pipeline
+                logger.exception(
+                    "RAG pipeline: unexpected retrieval failure for question '%s': %s", question, exc
+                )
+                return RAGResponse(
+                    answer=(
+                        "Something went wrong while searching the document store. "
+                        "Please try again shortly."
+                    ),
+                    used_llm=False,
+                    elapsed_seconds=time.perf_counter() - start_time,
+                    error=f"unexpected_retrieval_error: {exc}",
+                )
 
-        prompt_start = time.perf_counter()
-        prompt = build_prompt(question, chunks)
-        prompt_end = time.perf_counter()
+            if not chunks:
+                logger.info("RAG pipeline: no chunks retrieved for question '%s'", question)
+                return RAGResponse(
+                    answer=NO_CONTEXT_ANSWER,
+                    sources=[],
+                    chunks_used=[],
+                    used_llm=False,
+                    elapsed_seconds=time.perf_counter() - start_time,
+                )
 
-        try:
-            llm_start = time.perf_counter()
-            answer_text = self.llm.generate(prompt)
-            llm_end = time.perf_counter()
-        except LLMError as exc:
-            logger.error("RAG pipeline: LLM generation failed for question '%s': %s", question, exc)
-            return RAGResponse(
-                answer=(
-                    "I retrieved relevant context but couldn't generate an answer "
-                    "right now (the language model is unavailable). Please try again shortly."
-                ),
-                sources=build_sources(chunks),
-                chunks_used=chunks,
-                used_llm=False,
-                elapsed_seconds=time.time() - start_time,
-                error=f"llm_error: {exc}",
-            )
-        except Exception as exc:  # noqa: BLE001 - last-resort safety net; never crash the pipeline
-            logger.exception(
-                "RAG pipeline: unexpected LLM failure for question '%s': %s", question, exc
-            )
-            return RAGResponse(
-                answer=(
-                    "I retrieved relevant context but something went wrong while "
-                    "generating an answer. Please try again shortly."
-                ),
-                sources=build_sources(chunks),
-                chunks_used=chunks,
-                used_llm=False,
-                elapsed_seconds=time.time() - start_time,
-                error=f"unexpected_llm_error: {exc}",
-            )
+            with measure("5. build prompt"):
+                prompt = build_prompt(question, chunks)
+
+            try:
+                with measure("6-7. LLM generation (call + receive)"):
+                    answer_text = self.llm.generate(prompt)
+            except LLMError as exc:
+                logger.error("RAG pipeline: LLM generation failed for question '%s': %s", question, exc)
+                return RAGResponse(
+                    answer=(
+                        "I retrieved relevant context but couldn't generate an answer "
+                        "right now (the language model is unavailable). Please try again shortly."
+                    ),
+                    sources=build_sources(chunks),
+                    chunks_used=chunks,
+                    used_llm=False,
+                    elapsed_seconds=time.perf_counter() - start_time,
+                    error=f"llm_error: {exc}",
+                )
+            except Exception as exc:  # noqa: BLE001 - last-resort safety net; never crash the pipeline
+                logger.exception(
+                    "RAG pipeline: unexpected LLM failure for question '%s': %s", question, exc
+                )
+                return RAGResponse(
+                    answer=(
+                        "I retrieved relevant context but something went wrong while "
+                        "generating an answer. Please try again shortly."
+                    ),
+                    sources=build_sources(chunks),
+                    chunks_used=chunks,
+                    used_llm=False,
+                    elapsed_seconds=time.perf_counter() - start_time,
+                    error=f"unexpected_llm_error: {exc}",
+                )
 
         elapsed = time.perf_counter() - start_time
         logger.info("RAG pipeline answered question in %.2fs (%d chunks used)", elapsed, len(chunks))
-        total = time.perf_counter() - start_time
 
-        print("\n========== PERFORMANCE ==========")
-        print(f"Retrieval      : {(retrieve_end - retrieve_start)*1000:.2f} ms")
-        print(f"Prompt Build   : {(prompt_end - prompt_start)*1000:.2f} ms")
-        print(f"LLM Generation : {(llm_end - llm_start)*1000:.2f} ms")
-        print(f"Total          : {total:.2f} s")
-        print("=================================\n")
+        # Stage 8 = the true end-to-end wall-clock time, captured outside the
+        # profiler so it includes any overhead the per-stage blocks don't.
+        profiler.record("8. total end-to-end", elapsed)
+        profiler.print_summary(total_seconds=elapsed)
+
         return RAGResponse(
             answer=answer_text.strip(),
             sources=build_sources(chunks),
