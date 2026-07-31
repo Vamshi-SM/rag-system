@@ -55,7 +55,7 @@ class OllamaEmbedding(BaseEmbedding):
         api_key: str = "",
         base_url: str = "http://localhost:11434",
         model: str = "nomic-embed-text",
-        batch_size: int = 32,
+        batch_size: int = 8,
         timeout: float = 60.0,
         max_retries: int = 3,
         backoff_factor: float = 1.5,

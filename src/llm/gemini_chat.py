@@ -17,18 +17,22 @@ class GeminiChat(BaseLLM):
 
     def generate(self, prompt: str) -> str:
         try:
-            # Stage 6 = the network round-trip to Gemini (model inference +
-            # transport); stage 7 = extracting the text from the returned
-            # response object. They're one logical call but split here so the
-            # summary can show how much (if any) of LLM time is local parsing
-            # vs. the actual remote request.
             with measure("6. LLM call (Gemini generate_content)"):
                 response = self.client.models.generate_content(
-                    model=self.model,
+                    model=self.model,   
                     contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0,
+                        max_output_tokens=150,
+                        thinking_config=types.ThinkingConfig(
+                            thinking_budget=0,
+                        ),
+                    ),
                 )
+
             with measure("7. receive/extract response"):
                 return response.text
+
         except Exception as e:
             raise LLMError(str(e))
 

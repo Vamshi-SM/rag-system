@@ -59,7 +59,7 @@ class QwenEmbedding(BaseEmbedding):
         api_key: str,
         base_url: str,
         model: str,
-        batch_size: int = 32,
+        batch_size: int = 8,
         timeout: float = 30.0,
         max_retries: int = 3,
         backoff_factor: float = 1.5,
