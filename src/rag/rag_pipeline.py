@@ -18,6 +18,7 @@ from src.rag.response import NO_CONTEXT_ANSWER, RAGResponse, build_sources
 from src.retrieval.retriever import Retriever, RetrievalError
 from src.utils.logger import get_logger
 from src.utils.profiler import Profiler, measure, use_profiler
+from typing import Iterator
 
 logger = get_logger(__name__)
 
@@ -174,3 +175,48 @@ class RAGPipeline:
             used_llm=True,
             elapsed_seconds=elapsed,
         )
+
+
+    def stream_answer(
+        self,
+        question: str,
+        top_k: int | None = None,
+        similarity_threshold: float | None = None,
+        metadata_filter: dict | None = None,
+        filename: str | None = None,
+    ) -> tuple[Iterator[str], list, list]:
+        """Retrieve context and return an answer generator yielding tokens as they arrive."""
+        question = (question or "").strip()
+        if not question:
+            def empty_gen():
+                yield "Please ask a question."
+            return empty_gen(), [], []
+
+        try:
+            chunks = self.retriever.retrieve_with_scores(
+                question,
+                top_k=top_k if top_k is not None else self.top_k,
+                similarity_threshold=(
+                    self.similarity_threshold
+                    if similarity_threshold is None
+                    else similarity_threshold
+                ),
+                metadata_filter=metadata_filter,
+                filename=filename,
+            )
+        except Exception as exc:
+            logger.error("RAG pipeline: retrieval failed for question '%s': %s", question, exc)
+            def err_gen():
+                yield "I wasn't able to search the document store right now. Please try again shortly."
+            return err_gen(), [], []
+
+        if not chunks:
+            def no_ctx_gen():
+                yield NO_CONTEXT_ANSWER
+            return no_ctx_gen(), [], []
+
+        prompt = build_prompt(question, chunks)
+        sources = build_sources(chunks)
+        messages = [{"role": "user", "content": prompt}]
+
+        return self.llm.stream(messages), chunks, sources

@@ -1,38 +1,27 @@
+from __future__ import annotations
+
+from typing import Iterator
 from google import genai
-from google.genai import types
 
 from src.llm.base_llm import BaseLLM, ChatMessage, LLMError
-from src.utils.profiler import measure
 
 
 class GeminiChat(BaseLLM):
-    def __init__(self, project_id: str, location: str = "us-central1"):
+    def __init__(self, project_id: str, location: str = "asia-south1"):
         self.client = genai.Client(
             vertexai=True,
             project=project_id,
             location=location,
         )
-
         self.model = "gemini-2.5-flash"
 
     def generate(self, prompt: str) -> str:
         try:
-            with measure("6. LLM call (Gemini generate_content)"):
-                response = self.client.models.generate_content(
-                    model=self.model,   
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0,
-                        max_output_tokens=150,
-                        thinking_config=types.ThinkingConfig(
-                            thinking_budget=0,
-                        ),
-                    ),
-                )
-
-            with measure("7. receive/extract response"):
-                return response.text
-
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+            )
+            return response.text
         except Exception as e:
             raise LLMError(str(e))
 
@@ -41,3 +30,19 @@ class GeminiChat(BaseLLM):
             f"{m['role']}: {m['content']}" for m in messages
         )
         return self.generate(prompt)
+
+    def stream(self, messages: list[ChatMessage]) -> Iterator[str]:
+        """Stream completion tokens chunk-by-chunk using Gemini stream API."""
+        prompt = "\n".join(
+            f"{m['role']}: {m['content']}" for m in messages
+        )
+        try:
+            response = self.client.models.generate_content_stream(
+                model=self.model,
+                contents=prompt,
+            )
+            for chunk in response:
+                if chunk.text:
+                    yield chunk.text
+        except Exception as e:
+            raise LLMError(str(e))

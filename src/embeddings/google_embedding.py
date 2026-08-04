@@ -20,7 +20,7 @@ class GoogleEmbedding(BaseEmbedding):
     def __init__(
         self,
         project_id: str,
-        location: str = "us-central1",
+        location: str = "asia-south1",
         model: str = "text-embedding-004",
         batch_size: int = 8,
     ):

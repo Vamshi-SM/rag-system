@@ -114,7 +114,7 @@ class Settings:
 )
 
     gcp_location: str = field(
-        default_factory=lambda: os.getenv("GCP_LOCATION", "us-central1")
+        default_factory=lambda: os.getenv("GCP_LOCATION", "asia-south1")
 )
 
     gemini_model: str = field(
