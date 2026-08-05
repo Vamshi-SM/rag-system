@@ -1,0 +1,129 @@
+Retrieval-Augmented Generation (RAG) Notes
+What is RAG?
+
+Retrieval-Augmented Generation (RAG) is an AI framework that combines information retrieval with a Large Language Model (LLM) to generate accurate, relevant, and context-aware responses. Instead of relying only on the LLM's internal knowledge, a RAG system first retrieves relevant information from an external knowledge base and then uses that information to answer the user's query.
+
+Why is RAG Needed?
+
+Large Language Models have several limitations:
+
+They may generate incorrect or hallucinated answers.
+Their knowledge is limited to the data they were trained on.
+They cannot directly access private or organization-specific documents.
+Updating their knowledge requires expensive retraining.
+
+RAG solves these problems by retrieving the latest and most relevant information before generating a response.
+
+How a RAG System Works
+The user submits a query.
+The query is converted into an embedding (vector representation).
+The system searches a vector database to find the most relevant document chunks.
+The retrieved chunks are combined with the user's query.
+The LLM uses this context to generate a final response.
+The system returns the answer, often with citations to the source documents.
+Main Components of a RAG System
+1. Data Source
+
+The knowledge base contains documents such as PDFs, Word files, text files, databases, web pages, emails, contracts, policies, manuals, and research papers.
+
+2. Document Loader
+
+Reads and extracts text from different document formats.
+
+3. Text Preprocessing
+
+Cleans the extracted text by removing unnecessary content such as headers, footers, page numbers, and formatting issues.
+
+4. Text Chunking
+
+Splits large documents into smaller chunks so they can be efficiently processed and retrieved.
+
+5. Embedding Model
+
+Converts each text chunk into a numerical vector that captures its semantic meaning.
+
+6. Vector Database
+
+Stores embeddings and metadata, enabling fast semantic search.
+
+7. Retriever
+
+Finds the most relevant document chunks based on the user's query.
+
+8. Large Language Model (LLM)
+
+Uses the retrieved information to generate a coherent and context-aware answer.
+
+9. Response Generator
+
+Produces the final answer and, if supported, includes citations to the retrieved documents.
+
+Key Concepts
+Embeddings
+
+Embeddings are numerical vector representations of text that capture semantic meaning. Similar pieces of text have similar embeddings.
+
+Chunking
+
+Chunking divides long documents into smaller sections to improve retrieval accuracy and fit within the LLM's context window.
+
+Semantic Search
+
+Semantic search finds documents based on meaning rather than exact keyword matches.
+
+Metadata
+
+Metadata provides additional information about each document, such as filename, page number, author, category, and creation date, improving filtering and retrieval.
+
+Advantages of RAG
+Reduces hallucinations.
+Provides more accurate and reliable answers.
+Supports organization-specific knowledge.
+Uses the latest available documents without retraining the model.
+Enables citation-backed responses.
+Improves search quality using semantic similarity.
+Limitations of RAG
+Retrieval quality depends on the quality of document chunking and embeddings.
+Poorly organized documents reduce accuracy.
+Retrieval adds extra processing time.
+If relevant information is not retrieved, the generated answer may be incomplete.
+Applications of RAG
+Legal research assistants
+Customer support chatbots
+Enterprise knowledge management
+HR policy assistants
+Healthcare information retrieval
+Financial document analysis
+Technical documentation assistants
+Educational learning systems
+RAG Workflow
+
+Documents are collected and processed. The text is cleaned and divided into smaller chunks. Each chunk is converted into an embedding and stored in a vector database. When a user asks a question, the query is embedded, relevant chunks are retrieved through semantic search, and the retrieved context is provided to the LLM. The LLM generates a response based on the retrieved information and returns the final answer.
+
+Benefits of RAG
+Improves answer accuracy.
+Provides up-to-date information.
+Eliminates the need for frequent model retraining.
+Supports private and domain-specific knowledge.
+Increases user trust through source-backed responses.
+Scales efficiently as new documents are added.
+Difference Between Traditional Search and RAG
+
+Traditional keyword search relies on exact word matching, while RAG uses semantic search to understand the meaning of the query. Traditional search returns a list of documents, whereas RAG retrieves relevant content and generates a natural-language answer based on that content.
+
+Common Technologies Used in RAG
+Embedding Models: Google text-embedding-004, OpenAI text-embedding-3, BGE, E5, Sentence Transformers
+Vector Databases: Pinecone, ChromaDB, Qdrant, Weaviate, Milvus, FAISS
+Large Language Models: Gemini, GPT, Claude, Llama, Mistral
+Best Practices
+Use clean and well-structured documents.
+Choose an appropriate chunk size with overlap.
+Store useful metadata for filtering.
+Use high-quality embedding models.
+Retrieve only the most relevant chunks.
+Include citations in responses.
+Regularly update and re-index the knowledge base.
+Optimize retrieval for both speed and accuracy.
+Summary
+
+Retrieval-Augmented Generation (RAG) is a powerful AI architecture that combines semantic search with Large Language Models to provide accurate, context-aware, and reliable responses. By retrieving relevant information from an external knowledge base before generating an answer, RAG reduces hallucinations, supports organization-specific knowledge, and enables AI systems to deliver up-to-date and trustworthy information. It is widely used in legal, healthcare, finance, education, and enterprise knowledge management applications.

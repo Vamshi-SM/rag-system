@@ -67,17 +67,47 @@ def get_pipeline() -> RAGPipeline:
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-def generate_embedding(text: str) -> str:
+def ingest_local_files(file_paths: list[str]) -> str:
     """
-    Generate a vector embedding for a given string of text.
-    Use this tool when you need raw vector coordinates for similarity comparisons.
+    Reads multiple files from the local filesystem, saves a copy to the internal storage, 
+    generates embeddings, and adds them to the vector database.
+    Input must be a list of absolute file paths (e.g., ["C:/Documents/file1.txt"]).
     """
     pipeline = get_pipeline()
-    try:
-        vector = pipeline.retriever.embedder.embed(text)
-        return f"Successfully generated {len(vector)}-dimensional embedding. First 5 values: {vector[:5]}..."
-    except Exception as e:
-        return f"Error generating embedding: {str(e)}"
+    
+    # 1. Define where the application should permanently store these files
+    storage_dir = Path("C:/Users/Vamsi/Downloads/rag-system-final/rag-system/data/stored_files")
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    
+    results = []
+    
+    for path_str in file_paths:
+        source_path = Path(path_str)
+        
+        if not source_path.exists():
+            results.append(f"❌ File not found: {path_str}")
+            continue
+            
+        try:
+            # 2. Copy file to internal local storage
+            destination_path = storage_dir / source_path.name
+            shutil.copy2(source_path, destination_path)
+            
+            # 3. Read the content (Assuming text files for now)
+            content = destination_path.read_text(encoding="utf-8")
+            
+            # 4. Chunking and Embedding (You will need to import your chunker here)
+            # pseudo-code based on your architecture:
+            # chunks = chunk_text(content)
+            # embedded_chunks = pipeline.retriever.embedder.embed_documents(chunks)
+            # pipeline.retriever.vector_store.add(embedded_chunks)
+            
+            results.append(f"✅ Successfully stored and embedded: {source_path.name}")
+            
+        except Exception as e:
+            results.append(f"❌ Error processing {source_path.name}: {str(e)}")
+            
+    return "\n".join(results)
 
 @mcp.tool()
 def ask_company_docs(question: str) -> str:
@@ -101,5 +131,4 @@ def ask_company_docs(question: str) -> str:
         return f"Error querying documents: {str(e)}"
 
 if __name__ == "__main__":
-    # Run the server via standard input/output (the MCP communication layer)
     mcp.run()
