@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import uuid
+import hashlib
 import traceback
 from pathlib import Path
 from watchdog.observers import Observer
@@ -48,14 +49,13 @@ class VectorIngestionHandler(FileSystemEventHandler):
 
     def process_and_ingest(self, file_path: Path):
         """Reads, chunks, embeds, and stores the file."""
-        import hashlib
         try:
             # 1. Read the file
             content = file_path.read_text(encoding="utf-8")
             if not content.strip():
                 print(f"[SKIP] {file_path.name} is empty.")
                 return
-                
+
             # 2. Calculate real checksum (MD5 hash of the content)
             file_hash = hashlib.md5(content.encode("utf-8")).hexdigest()
             
@@ -70,7 +70,7 @@ class VectorIngestionHandler(FileSystemEventHandler):
             chunk_size = 1000
             raw_chunks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
 
-            # 5. Format with top-level keys
+            # 5. Format with top-level keys expected by GoogleEmbedding
             document_id = str(uuid.uuid4())
             formatted_chunks = []
             for i, text in enumerate(raw_chunks):
@@ -92,68 +92,20 @@ class VectorIngestionHandler(FileSystemEventHandler):
             # 6. Generate Embeddings
             embedded_chunks = self.embedder.embed_documents(formatted_chunks)
 
+            # 7. Re-attach the metadata that was stripped by the embedder
+            for original, embedded in zip(formatted_chunks, embedded_chunks):
+                original_meta = original["metadata"]
+                original_meta["filename"] = file_path.name
+                embedded["metadata"] = original_meta
+
             print(f"[DATABASE] Storing vectors in PostgreSQL/pgvector...")
-            # 7. Save to Vector Store
+            # 8. Save to Vector Store
             self.vector_store.insert_many(embedded_chunks)
 
-            # 8. Register Document using the real hash
+            # 9. Register Document using the real hash
             self.vector_store.register_document(
                 document_id=document_id,
                 checksum=file_hash,
-                filename=file_path.name,
-                source="watcher_upload",
-                chunk_count=len(formatted_chunks)
-            )
-
-            print(f"✅ [SUCCESS] {file_path.name} is now available for RAG queries!\n")
-
-        except Exception as e:
-            print(f"❌ [ERROR] Failed to ingest {file_path.name}: {str(e)}")
-            traceback.print_exc()
-            
-        """Reads, chunks, embeds, and stores the file."""
-        try:
-            # 1. Read the file
-            content = file_path.read_text(encoding="utf-8")
-            if not content.strip():
-                print(f"[SKIP] {file_path.name} is empty.")
-                return
-
-            print(f"[PROCESSING] Chunking {file_path.name}...")
-            # 2. Chunking
-            chunk_size = 1000
-            raw_chunks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
-
-            # 3. Format with top-level keys expected by GoogleEmbedding
-            document_id = str(uuid.uuid4())
-            formatted_chunks = []
-            for i, text in enumerate(raw_chunks):
-                chunk_id = f"{document_id}_chunk_{i}"
-                formatted_chunks.append({
-                    "id": chunk_id,
-                    "chunk_id": chunk_id,
-                    "document_id": document_id,
-                    "text": text,
-                    "metadata": {
-                        "id": chunk_id,
-                        "chunk_id": chunk_id,
-                        "document_id": document_id,
-                        "source": file_path.name
-                    }
-                })
-
-            print(f"[EMBEDDING] Generating vectors for {len(formatted_chunks)} chunks via Vertex AI...")
-            # 4. Generate Embeddings
-            embedded_chunks = self.embedder.embed_documents(formatted_chunks)
-
-            print(f"[DATABASE] Storing vectors in PostgreSQL/pgvector...")
-            # 5. Save to Vector Store
-            self.vector_store.insert_many(embedded_chunks)
-
-            # 6. Register Document
-            self.vector_store.register_document(
-                document_id=document_id,
-                checksum=document_id,
                 filename=file_path.name,
                 source="watcher_upload",
                 chunk_count=len(formatted_chunks)
