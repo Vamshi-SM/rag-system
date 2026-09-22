@@ -1,428 +1,286 @@
 # RAG System
 
-A production-ready Retrieval-Augmented Generation pipeline: document ingestion
-(PDF/DOCX/TXT/Markdown), chunking, embeddings via an internal SLLM (Qwen)
-API, a SQLite + `sqlite-vec` vector store, retrieval, LLM-generated answers,
-a FastAPI REST API, and a full test suite.
+Retrieval-Augmented Generation system for ingesting PDF, DOCX, TXT, and
+Markdown documents, storing embeddings, retrieving relevant chunks, and
+generating grounded answers.
 
-```
-Documents  ->  Load  ->  Chunk  ->  Embed  ->  Store  ->  Retrieve  ->  Prompt  ->  LLM  ->  Answer
-```
+The repository currently contains two backend paths:
 
-## Table of contents
+- The CLI and Streamlit application use Google Vertex AI through
+  `GoogleEmbedding` and `GeminiChat`.
+- The FastAPI application is wired to the older `QwenEmbedding` and
+  `SLLMChat` path and should be treated as a separate, unfinished integration
+  until its credentials and constructor wiring are aligned with the active
+  Google configuration.
 
-- [Architecture](#architecture)
-- [Project structure](#project-structure)
-- [Installation](#installation)
-- [Running ingestion](#running-ingestion)
-- [Running a query (CLI)](#running-a-query-cli)
-- [Running the API](#running-the-api)
-- [API documentation](#api-documentation)
-- [Example requests](#example-requests)
-- [Testing](#testing)
-- [Configuration reference](#configuration-reference)
-- [Security notes](#security-notes)
-- [Extending the system](#extending-the-system)
+The active `.env` selects PostgreSQL with pgvector. SQLite with sqlite-vec is
+also supported when `DATABASE_BACKEND=sqlite`.
 
----
-
-## Architecture
-
-```
-                         ┌───────────────────────────────────────────────────────┐
-                         │                     Data sources                      │
-                         │        PDF   ·   DOCX   ·   TXT   ·   Markdown        │
-                         └───────────────────────────┬───────────────────────────┘
-                                                     │
-                                                     ▼
-                         ┌───────────────────────────────────────────────────────┐
-                         │   src/loaders/          Phase 2 - Document Loading    │
-                         │   PDFLoader · DocxLoader · TxtLoader · MarkdownLoader  │
-                         │   DocumentLoader (recursive dir scan + dispatch)      │
-                         └───────────────────────────┬───────────────────────────┘
-                                                     │ LoadedDocument
-                                                     ▼
-                         ┌───────────────────────────────────────────────────────┐
-                         │   src/chunking/         Phase 3 - Chunking            │
-                         │   DocumentChunker (token-aware, per-page for PDFs)    │
-                         └───────────────────────────┬───────────────────────────┘
-                                                     │ Chunk
-                                                     ▼
-                         ┌───────────────────────────────────────────────────────┐
-                         │   src/embeddings/        Phase 4 - Embeddings         │
-                         │   BaseEmbedding  ·  QwenEmbedding (SLLM API)          │
-                         └───────────────────────────┬───────────────────────────┘
-                                                     │ EmbeddedChunk
-                                                     ▼
-                         ┌───────────────────────────────────────────────────────┐
-                         │   src/vectordb/          Phase 5 - Vector Database    │
-                         │   SQLite + sqlite-vec  ·  chunks / chunks_vec /       │
-                         │   document_registry (dedup)                          │
-                         └───────────────────────────┬───────────────────────────┘
-                                                     │
-                     ┌───────────────────────────────┼───────────────────────────┐
-                     │                               │                           │
-                     ▼                               ▼                           ▼
-        ┌───────────────────────┐   ┌───────────────────────────┐   ┌───────────────────────┐
-        │ src/ingestion/         │   │ src/retrieval/             │   │ src/llm/               │
-        │ Phase 6 - Ingestion    │   │ Phase 7 - Retrieval        │   │ Phase 8 - LLM client   │
-        │ IngestionService       │   │ Retriever (search/         │   │ BaseLLM · SLLMChat     │
-        │ (Load→Dedup→Chunk→     │   │ retrieve/retrieve_with_    │   │ (chat completions API) │
-        │  Embed→Store)          │   │ scores, top_k, threshold)  │   │                        │
-        └───────────┬────────────┘   └──────────────┬─────────────┘   └───────────┬────────────┘
-                    │                               │                             │
-                    │                               └──────────────┬──────────────┘
-                    │                                              ▼
-                    │                               ┌───────────────────────────────┐
-                    │                               │ src/rag/    Phase 8 - RAG      │
-                    │                               │ prompt.py · response.py ·      │
-                    │                               │ rag_pipeline.py (RAGPipeline)  │
-                    │                               └───────────────┬────────────────┘
-                    │                                                │
-                    ▼                                                ▼
-        ┌────────────────────────────────────────────────────────────────────────┐
-        │                    src/api/            Phase 9 - REST API              │
-        │   main.py (FastAPI app + lifespan)  ·  routes.py (/ingest /query        │
-        │   /health /stats)  ·  schemas.py (Pydantic v2)  ·  dependencies.py      │
-        │   middleware.py (request logging)  ·  exceptions.py (error handlers)   │
-        └───────────────────────────┬──────────────────────────────────────────┘
-                                    │
-                     ┌──────────────┼──────────────┐
-                     ▼              ▼              ▼
-              scripts/ingest.py scripts/query.py  uvicorn (HTTP clients)
-                (CLI)             (CLI)
+```text
+Documents -> Load -> Chunk -> Embed -> Store -> Retrieve -> Prompt -> LLM -> Answer
 ```
 
-**Design principles carried through every phase:**
+## Project Structure
 
-- Each phase is a thin, swappable module behind an abstract base class
-  (`BaseLoader`, `BaseEmbedding`, `BaseLLM`) - no phase reimplements another's
-  logic.
-- `IngestionService` is the *single* implementation of the ingestion pipeline;
-  both `scripts/ingest.py` (CLI) and `POST /ingest` (API) call into it.
-- `RAGPipeline` is the *single* implementation of the query pipeline; both
-  `scripts/query.py` (CLI) and `POST /query` (API) call into it.
-- Every layer degrades gracefully: a bad file, a failed embedding batch, a
-  down LLM, or an empty retrieval result never crashes the pipeline - it's
-  logged and surfaced as a clear, structured response.
-
-## Project structure
-
-```
+```text
 rag-system/
 ├── data/
-│   ├── documents/              # Drop source files here for ingestion
-│   └── processed/               # SQLite database lives here
+│   ├── documents/              # Source documents for the normal ingestion CLI
+│   ├── upload_files/           # Files used by the watcher/Streamlit path
+│   └── processed/              # SQLite database when the SQLite backend is used
 ├── src/
-│   ├── loaders/                 # Phase 2 - PDF/DOCX/TXT/MD loaders
-│   ├── chunking/                 # Phase 3 - token-aware chunking
-│   ├── embeddings/                # Phase 4 - SLLM (Qwen) embedding client
-│   ├── vectordb/                   # Phase 5 - SQLite + sqlite-vec store
-│   ├── ingestion/                   # Phase 6 - shared ingestion service
-│   ├── retrieval/                    # Phase 7 - Retriever
-│   ├── rag/                           # Phase 8 - prompt/response/pipeline
-│   ├── llm/                            # Phase 8 - SLLM chat client
-│   ├── api/                             # Phase 9 - FastAPI REST API
-│   ├── utils/                            # Shared logging
-│   └── config.py                          # Central settings (.env-driven)
+│   ├── loaders/                # PDF, DOCX, TXT, and Markdown loading
+│   ├── chunking/               # Token-aware document chunking
+│   ├── embeddings/             # Qwen/SLLM and Google Vertex AI embedders
+│   ├── vectordb/               # Backend-neutral store, SQLite, and PostgreSQL
+│   ├── ingestion/              # Shared Load -> Dedup -> Chunk -> Embed -> Store flow
+│   ├── retrieval/              # Similarity and metadata-filtered retrieval
+│   ├── rag/                    # Prompt construction and answer pipeline
+│   ├── llm/                    # Gemini and compatibility wrappers
+│   └── api/                    # FastAPI routes and application lifecycle
 ├── scripts/
-│   ├── ingest.py                 # CLI: run ingestion
-│   └── query.py                  # CLI: interactive / one-shot query
-├── tests/                         # Phase 10 - full test suite
-├── .env.example
-├── pytest.ini
+│   ├── ingest.py               # Normal batch ingestion CLI
+│   ├── query.py                # CLI query interface
+│   ├── watcher.py              # Optional upload-folder watcher
+│   └── app.py                  # Optional Streamlit UI
+├── tests/                      # Offline unit and integration tests
+├── .env.example                # Safe configuration template
 ├── requirements.txt
-└── README.md
+└── pytest.ini
 ```
 
 ## Installation
 
-Requires Python 3.11+.
+Use Python 3.11 or newer. On Windows, create a virtual environment so the
+terminal and VS Code use the same interpreter:
 
-```bash
-git clone <this-repo>
-cd rag-system
-pip install -r requirements.txt
-cp .env.example .env
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-Edit `.env` with your team's SLLM credentials:
+Never commit `.env` or place API keys in source files. The current workspace
+`.env` contains credentials; rotate any credential that has been exposed and
+keep only placeholders in `.env.example`.
 
+## Configuration
+
+Configuration is loaded by `src/config.py` with `python-dotenv` when the
+process starts. Paths are relative to the project root unless absolute paths
+are supplied.
+
+### Active Google + PostgreSQL configuration
+
+The current CLI and UI configuration uses:
+
+```dotenv
+DATA_DIRECTORY=data/documents
+DATABASE_BACKEND=postgres
+DATABASE_URL=postgresql://user:password@host:5432/database
+GCP_PROJECT_ID=your-gcp-project
+GCP_LOCATION=asia-south1
+EMBEDDING_MODEL=text-embedding-004
+GEMINI_MODEL=gemini-2.5-flash
+TOP_K=3
+SIMILARITY_THRESHOLD=0.20
 ```
-SLLM_API_KEY=your-api-key
-SLLM_BASE_URL=https://your-sllm-host/v1
-EMBEDDING_MODEL=qwen-embedding-v1
-CHAT_MODEL=qwen-chat-v1
+
+The PostgreSQL server must have the `vector` extension installed, and the
+database user must be able to create the `chunks`, `document_registry`, and
+vector index objects. The PostgreSQL schema currently uses `VECTOR(768)`;
+the selected embedding model must produce 768-dimensional vectors.
+
+Google authentication must also be available to the Google Gen AI client.
+Use the Google Cloud SDK/application-default credentials or set
+`GOOGLE_APPLICATION_CREDENTIALS` to a local service-account JSON path. Do not
+hardcode that path in a script.
+
+### SQLite alternative
+
+For a local database, use:
+
+```dotenv
+DATABASE_BACKEND=sqlite
+DATABASE_PATH=data/processed/vectors.db
 ```
 
-> **API shape assumption:** the embedding and chat clients
-> (`src/embeddings/qwen_embedding.py`, `src/llm/sllm.py`) assume
-> OpenAI-compatible `POST {SLLM_BASE_URL}/embeddings` and
-> `POST {SLLM_BASE_URL}/chat/completions` endpoints. If your team's actual
-> SLLM API differs, only the `_call_api` method in each file needs to change.
+SQLite requires no PostgreSQL server and uses `sqlite-vec`. The normal CLI
+will create the configured database directory automatically.
 
-## Running ingestion
+### Configuration reference
 
-Drop `.pdf`, `.docx`, `.txt`, or `.md` files (any nested folder structure)
-into `data/documents/`, then:
+| Variable | Default | Purpose |
+|---|---|---|
+| `DATA_DIRECTORY` | `data/documents` | Directory scanned by `scripts/ingest.py` |
+| `DATABASE_BACKEND` | `sqlite` | `sqlite` or `postgres` |
+| `DATABASE_PATH` | `data/processed/vectors.db` | SQLite database path |
+| `DATABASE_URL` | empty | PostgreSQL connection URL |
+| `CHUNK_SIZE` / `CHUNK_OVERLAP` | `700` / `100` | Chunking parameters |
+| `GCP_PROJECT_ID` / `GCP_LOCATION` | empty / `asia-south1` | Vertex AI project and region |
+| `EMBEDDING_MODEL` | `text-embedding-004` | Embedding model |
+| `EMBEDDING_BATCH_SIZE` | `32` | Batch size for configured embedding clients |
+| `TOP_K` / `SIMILARITY_THRESHOLD` | `5` / `0.7` | Retrieval defaults |
+| `RETRIEVAL_CANDIDATE_MULTIPLIER` | `4` | Candidate over-fetch factor |
+| `CHAT_MODEL` | `ollama/kimi-k2.7-code` | Legacy SLLM chat setting |
+| `REQUEST_TIMEOUT` / `LLM_MAX_RETRIES` | `60` / `3` | Legacy chat client settings |
+| `ALLOWED_INGEST_ROOT` | parent of `DATA_DIRECTORY` | API ingestion path boundary |
+| `ALLOWED_CORS_ORIGINS` | empty | Comma-separated CORS origins |
+| `LOG_LEVEL` / `LOG_DIRECTORY` | `INFO` / `logs` | Logging configuration |
 
-```bash
+The Qwen/SLLM embedding client additionally reads `SLLM_API_KEY` or
+`SHAREDLLM_API_KEY`, and `SLLM_BASE_URL`. Those values are used by the API
+path, not by the current Google-based CLI ingestion path.
+
+## Run Ingestion
+
+Put supported files under `data/documents/`, then run from the project root:
+
+```powershell
 python scripts/ingest.py
 ```
 
-```
-Loading documents...
-15 documents loaded
+Useful options:
 
-Chunking...
-352 chunks created
-
-Generating embeddings...
-352 embeddings generated
-
-Saving vectors...
-352 vectors stored
-
-Total vectors in store: 352
-Completed successfully.
+```powershell
+python scripts/ingest.py --help
+python scripts/ingest.py --data-dir data/documents
+python scripts/ingest.py --reset
 ```
 
-Ingestion is **incremental and idempotent** - every file is checksummed
-(SHA-256); re-running only processes files that are new or changed:
+The service recursively loads supported files, computes a SHA-256 checksum,
+skips unchanged files, chunks new documents, calls the configured embedder,
+and writes vectors to the selected database. `--reset` deletes stored vectors
+and the document registry before ingesting again.
 
+This command requires a reachable PostgreSQL database when
+`DATABASE_BACKEND=postgres`, plus working Vertex AI credentials for the
+current `scripts/ingest.py` implementation.
+
+## Run Queries
+
+One-shot query:
+
+```powershell
+python scripts/query.py "What is our refund policy?"
+python scripts/query.py "What is our refund policy?" --top-k 3 --threshold 0.20
 ```
-Loading documents...
-15 documents loaded
-
-15 duplicate document(s) skipped (already ingested)
-
-Completed successfully. (no new documents)
-```
-
-Flags: `--data-dir <path>` to ingest a different directory, `--reset` to wipe
-all vectors and the document registry first.
-
-## Running a query (CLI)
 
 Interactive mode:
 
-```bash
+```powershell
 python scripts/query.py
 ```
 
-```
-RAG Query Console. Type 'exit' or 'quit' to leave.
+Type `exit` or `quit` to stop. The query CLI uses the same Google Vertex AI
+embedding model and Gemini chat model as the current ingestion/UI path.
 
-Ask a question
+## Run the FastAPI API
 
-> How does the embedding system work?
-
-Searching...
-Retrieved 5 chunks.
-Generating answer...
-
-Answer
-
-The embedding system first converts documents into chunks...
-
-Sources
-
-pricing.md
-support.txt (page 2)
-
-(1.84s, 5 chunks used)
+```powershell
+python -m uvicorn src.api.main:app --reload
 ```
 
-One-shot mode:
+Interactive API documentation is available at:
 
-```bash
-python scripts/query.py "What is our refund policy?" --top-k 3 --threshold 0.75
+- `http://localhost:8000/docs`
+- `http://localhost:8000/redoc`
+
+Routes are `POST /ingest`, `POST /query`, `GET /health`, and `GET /stats`.
+The ingest route only accepts folders inside `ALLOWED_INGEST_ROOT`.
+
+Important: `src/api/main.py` currently constructs `QwenEmbedding` and the
+`SLLMChat` compatibility wrapper, while `src/llm/sllm.py` currently aliases
+that wrapper to `GeminiChat`. The API therefore does not yet match the active
+Google `.env` configuration. Use the CLI for the verified current workflow,
+or align the API constructors and credentials before using this server in a
+real deployment.
+
+## Optional Upload Watcher and UI
+
+The repository also contains `scripts/watcher.py` and `scripts/app.py` for an
+automatic upload-folder workflow. They currently contain hardcoded paths for
+another machine and `watchdog`/`streamlit` are not declared in
+`requirements.txt`. They are not part of the verified setup. Before using
+them, replace the hardcoded paths with environment-based paths, add their
+dependencies, and ensure they use the same database and embedding backend as
+the main CLI.
+
+## API Examples
+
+Ingest a folder:
+
+```powershell
+curl.exe -X POST http://localhost:8000/ingest `
+  -H "Content-Type: application/json" `
+  -d '{"folder":"data/documents"}'
 ```
 
-## Running the API
+Ask a question:
 
-```bash
-uvicorn src.api.main:app --reload
+```powershell
+curl.exe -X POST http://localhost:8000/query `
+  -H "Content-Type: application/json" `
+  -d '{"question":"What is our refund policy?"}'
 ```
 
-Swagger UI at `http://localhost:8000/docs`, ReDoc at `http://localhost:8000/redoc`.
+Check status:
 
-All expensive objects (embedding client, LLM client, vector store,
-retriever, RAG pipeline, ingestion service) are constructed once at startup
-(FastAPI `lifespan`) and reused across requests.
-
-## API documentation
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/ingest` | Scan a folder, chunk/embed/store new documents, skip duplicates. |
-| `POST` | `/query` | Answer a question via retrieval-augmented generation. |
-| `GET` | `/health` | Check database, embedding service, and LLM connectivity. |
-| `GET` | `/stats` | Document/chunk/embedding counts and database size on disk. |
-
-All endpoints return `422` for validation errors and a structured error body
-on any failure:
-
-```json
-{ "status": "error", "message": "Folder not found." }
-```
-
-`POST /ingest` additionally returns `403` if the requested folder resolves
-outside the configured `ALLOWED_INGEST_ROOT` (see
-[Security notes](#security-notes)), and `404` if the folder doesn't exist or
-contains no supported documents.
-
-## Example requests
-
-### `POST /ingest`
-
-```bash
-curl -X POST http://localhost:8000/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"folder": "./data/documents"}'
-```
-
-```json
-{
-    "status": "success",
-    "documents": 12,
-    "chunks": 415,
-    "stored_vectors": 415,
-    "duplicates_skipped": 0,
-    "processing_time": "4.8 sec"
-}
-```
-
-### `POST /query`
-
-```bash
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{"question": "How does Council GPT perform embeddings?"}'
-```
-
-```json
-{
-    "answer": "Council GPT performs embeddings using the Qwen embedding model...",
-    "sources": [
-        {"filename": "doc1.pdf", "page": 2, "score": 0.94},
-        {"filename": "doc3.pdf", "page": 8, "score": 0.89}
-    ],
-    "retrieved_chunks": 5,
-    "latency": "1.42 sec"
-}
-```
-
-Optional fields: `top_k` (1-50), `similarity_threshold` (-1.0-1.0), `filename`
-(restrict retrieval to one source file).
-
-### `GET /health`
-
-```bash
-curl http://localhost:8000/health
-```
-
-```json
-{
-    "status": "healthy",
-    "database": "connected",
-    "embedding_service": "online",
-    "llm": "online"
-}
-```
-
-### `GET /stats`
-
-```bash
-curl http://localhost:8000/stats
-```
-
-```json
-{
-    "documents": 24,
-    "chunks": 925,
-    "embeddings": 925,
-    "database_size": "18.0 MB"
-}
+```powershell
+curl.exe http://localhost:8000/health
+curl.exe http://localhost:8000/stats
 ```
 
 ## Testing
 
-```bash
-pip install -r requirements.txt   # includes pytest, pytest-asyncio, httpx, reportlab
-pytest
+The test suite uses deterministic fakes for embedding and LLM calls, and
+creates temporary documents and databases. It is intended to run offline:
+
+```powershell
+python -m pytest -q
+python -m pytest tests/test_ingestion.py -v
+python -m pytest tests/test_api.py -v
+python -m pytest tests/test_performance.py -v -s
 ```
 
-```bash
-pytest -v                          # verbose
-pytest tests/test_api.py -v        # one file
-pytest tests/test_performance.py -v -s   # see benchmark report output
+The tests cover loaders, chunking, embeddings, vector storage, ingestion,
+retrieval, the RAG pipeline, LLM behavior, API validation, integration, and
+performance. Tests that use temporary SQLite stores do not require the live
+PostgreSQL database or external model credentials.
+
+## Troubleshooting
+
+**`No module named pytest` or `No module named dotenv`**
+
+The terminal is using a different interpreter from the virtual environment.
+Activate `.venv` and verify:
+
+```powershell
+python -c "import sys; print(sys.executable)"
+python -m pip install -r requirements.txt
 ```
 
-The suite runs **fully offline** - the embedding and LLM APIs are patched to
-deterministic fakes (see `tests/conftest.py`), and PDF/DOCX samples are
-generated on the fly (via `reportlab` / `python-docx`), so no network access
-or real SLLM credentials are required to run it.
+**PostgreSQL connection failure**
 
-| File | Covers |
-|---|---|
-| `test_loaders.py` | Phase 2 - PDF/DOCX/TXT/Markdown loaders, directory recursion, unsupported/empty file handling |
-| `test_chunking.py` | Phase 3 - chunk sizing, overlap, per-page metadata, empty documents |
-| `test_embeddings.py` | Phase 4 - batching, retries, dimension detection, partial-batch failure handling |
-| `test_vector_store.py` | Phase 5 - CRUD, cosine similarity search, document registry, persistence across reconnects |
-| `test_ingestion.py` | Phase 6 - full ingestion service, duplicate detection, incremental ingestion, error capture |
-| `test_retrieval.py` | Phase 7 - top-k, similarity threshold, metadata/filename filtering, error propagation |
-| `test_rag_pipeline.py` | Phase 8 - prompt building, source de-duplication, graceful degradation on any failure |
-| `test_llm.py` | Phase 8 - chat/generate/stream, retries, error handling |
-| `test_api.py` | Phase 9 - all 4 endpoints, validation, error codes, Swagger docs availability |
-| `test_integration.py` | End-to-end: 10 synthetic PDFs -> ingest -> query -> retrieve -> answer |
-| `test_performance.py` | Ingestion throughput, embedding/retrieval latency, API response time (prints a benchmark report) |
+Check `DATABASE_BACKEND`, `DATABASE_URL`, network access, credentials, and
+that the PostgreSQL `vector` extension is installed.
 
-## Configuration reference
+**Google authentication failure**
 
-All settings are read from `.env` (see `.env.example` for the full list with
-defaults):
+Check `GCP_PROJECT_ID`, `GCP_LOCATION`, application-default credentials, and
+that the Vertex AI API is enabled for the project.
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `DATA_DIRECTORY` | `data/documents` | Default folder ingestion scans |
-| `DATABASE_PATH` | `data/processed/vectors.db` | SQLite database file |
-| `CHUNK_SIZE` / `CHUNK_OVERLAP` | `700` / `100` | Chunking parameters (approx. tokens) |
-| `SLLM_API_KEY` / `SLLM_BASE_URL` | - | SLLM credentials, shared by embeddings and chat |
-| `EMBEDDING_MODEL` / `CHAT_MODEL` | - | Model names for embeddings vs. chat |
-| `EMBEDDING_BATCH_SIZE` / `EMBEDDING_TIMEOUT` / `EMBEDDING_MAX_RETRIES` | `32` / `30` / `3` | Embedding client tuning |
-| `REQUEST_TIMEOUT` / `LLM_MAX_RETRIES` | `60` / `3` | Chat client tuning |
-| `TOP_K` / `SIMILARITY_THRESHOLD` | `5` / `0.7` | Default retrieval parameters |
-| `RETRIEVAL_CANDIDATE_MULTIPLIER` | `4` | Over-fetch factor before metadata/filename filtering |
-| `ALLOWED_INGEST_ROOT` | parent of `DATA_DIRECTORY` | Filesystem boundary `POST /ingest` may read from |
-| `ALLOWED_CORS_ORIGINS` | (empty) | Comma-separated CORS origins; blank disables cross-origin access |
-| `LOG_LEVEL` / `LOG_DIRECTORY` | `INFO` / `logs` | Logging configuration |
+**Embedding dimension mismatch**
 
-## Security notes
+The PostgreSQL schema expects 768 dimensions. Use a compatible model or create
+a fresh database and update the schema and store configuration together.
 
-- **Path traversal**: `POST /ingest` accepts a folder path from the caller.
-  To prevent it from being pointed at arbitrary filesystem locations (`/etc`,
-  `~/.ssh`, etc.), the resolved path must fall inside `ALLOWED_INGEST_ROOT`
-  (defaults to the parent of `DATA_DIRECTORY`). Requests outside that root
-  get `403 Forbidden`.
-- **CORS**: disabled by default (`ALLOWED_CORS_ORIGINS` empty). Set explicit
-  origins for browser-based clients; avoid `*` with `allow_credentials=True`
-  in production.
-- **Secrets**: `SLLM_API_KEY` is read from `.env` only, never logged (only a
-  warning is logged if it's missing, never its value).
-- **Centralized error handling**: every error path returns the same
-  `{"status": "error", "message": "..."}` shape - internal exception details
-  (stack traces, file paths) are logged server-side, never leaked to clients
-  (see the generic `Exception` handler in `src/api/exceptions.py`).
+## Security Notes
 
-## Extending the system
-
-- **New document type**: add a `BaseLoader` subclass in `src/loaders/`,
-  register it in `DocumentLoader.__init__`.
-- **New embedding/chat backend**: implement `BaseEmbedding` or `BaseLLM` and
-  swap the import in `scripts/*.py` / `src/api/main.py`.
-- **Hybrid search / re-ranking**: `Retriever.retrieve_with_scores` already
-  over-fetches candidates and filters in Python - add a re-ranking step
-  there without touching the vector store.
-- **New vector DB backend**: implement the same public methods as
-  `VectorStore` and swap the import.
+- Keep `.env`, service-account JSON files, and API keys out of version control.
+- Rotate credentials if they have been pasted into chat, logs, or committed
+  history.
+- Keep `ALLOWED_INGEST_ROOT` restricted to the intended document directory.
+- Configure explicit CORS origins for browser clients; leave CORS empty when it
+  is not needed.
