@@ -61,6 +61,12 @@ class Settings:
     database_backend: str = field(
     default_factory=lambda: os.getenv("DATABASE_BACKEND", "sqlite")
 )
+    #: Max pooled PostgreSQL connections per process (postgres backend only).
+    #: Connections are checked out per query, so ~2x the expected concurrent
+    #: request count is a safe ceiling.
+    database_pool_size: int = field(
+        default_factory=lambda: _get_int("DATABASE_POOL_SIZE", 10)
+)
 
     # --- Chunking ---
     chunk_size: int = field(default_factory=lambda: _get_int("CHUNK_SIZE", 700))

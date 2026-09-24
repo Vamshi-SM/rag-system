@@ -111,7 +111,7 @@ class TestSimilaritySearch:
         chunk = _make_chunk("c1", "d1", "text", [1.0, 0.0, 0.0])
         chunk["metadata"]["page"] = 7
         vector_store.insert_many([chunk])
-        results = vector_store.similarity_search([1.0, 0.0, 0.0], top_k=1)
+        results = vector_store.similarity_search(_vec([1.0, 0.0, 0.0]), top_k=1)
         assert results[0]["metadata"]["page"] == 7
 
 

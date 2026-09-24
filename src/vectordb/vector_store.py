@@ -15,6 +15,8 @@ from typing import Any, TypedDict
 
 from psycopg.types.json import Json
 
+import sqlite_vec
+
 from src.config import settings
 from src.embeddings.base_embedding import EmbeddedChunk
 from src.utils.logger import get_logger
@@ -27,9 +29,6 @@ from src.vectordb.schema import (
     VEC_TABLE,
     build_vec_table_sql,
 )
-
-if settings.database_backend == "sqlite":
-    import sqlite_vec
 
 logger = get_logger(__name__)
 
@@ -48,6 +47,19 @@ def _build_fts_query(query: str) -> str:
     if not terms:
         return ""
     return " OR ".join(f'"{term}"*' for term in terms)
+
+
+def _build_pg_tsquery(query: str) -> str:
+    """Shape a natural-language query into a Postgres ``to_tsquery`` expression.
+
+    Mirrors :func:`_build_fts_query`: one prefix-matched term per token,
+    OR'd together so inflectional variants match. Terms are restricted to
+    ``[A-Za-z0-9]+`` which makes them safe for ``to_tsquery`` syntax.
+    """
+    terms = [m.group(0) for m in _FTS_TERM_RE.finditer(query) if len(m.group(0)) >= 2]
+    if not terms:
+        return ""
+    return " | ".join(f"{term}:*" for term in terms)
 
 
 class SearchResult(TypedDict):
@@ -79,7 +91,9 @@ class VectorStore:
         self.is_postgres = settings.database_backend == "postgres"
         
         if self.is_postgres:
-            self.database = PostgresDatabase(settings.database_url)
+            self.database = PostgresDatabase(
+                settings.database_url, pool_size=settings.database_pool_size
+            )
         else:
             self.database = Database(database_path)
             
@@ -305,10 +319,11 @@ class VectorStore:
         return results
 
     def keyword_search(self, query: str, limit: int = 10) -> list[SearchResult]:
-        """Run a BM25 keyword search over chunk text via the FTS5 index."""
+        """Run a keyword search over chunk text (FTS5 on SQLite,
+        tsvector + GIN on PostgreSQL)."""
         if self.is_postgres:
-            return []
-            
+            return self._keyword_search_postgres(query, limit)
+
         if not self.database.fts_available:
             return []
 
@@ -356,6 +371,68 @@ class VectorStore:
                     "text": row["text"],
                     "metadata": metadata,
                     "distance": abs(float(rank)),
+                    "similarity": similarity,
+                }
+            )
+
+        logger.info("keyword_search returned %d results (limit=%d)", len(results), limit)
+        return results
+
+    def _keyword_search_postgres(self, query: str, limit: int) -> list[SearchResult]:
+        """Keyword search via the ``tsv`` generated column (see
+        ``PostgresDatabase.initialize_database``).
+
+        ``ts_rank`` is higher-is-better on an unbounded positive scale;
+        ``rank / (1 + rank)`` maps it monotonically into (0, 1) so the
+        ``similarity`` field stays comparable with the SQLite path.
+        """
+        if not self.database.fts_available:
+            return []
+
+        query = (query or "").strip()
+        if not query:
+            return []
+
+        tsquery = _build_pg_tsquery(query)
+        if not tsquery:
+            return []
+
+        limit = max(1, int(limit))
+
+        try:
+            rows = self.database.query(
+                f"""
+                SELECT
+                    c.id            AS id,
+                    c.chunk_id      AS chunk_id,
+                    c.document_id   AS document_id,
+                    c.text          AS text,
+                    c.metadata      AS metadata,
+                    ts_rank(c.tsv, q) AS rank
+                FROM {CHUNKS_TABLE} c, to_tsquery('english', %s) q
+                WHERE c.tsv @@ q
+                ORDER BY rank DESC
+                LIMIT %s
+                """,
+                (tsquery, limit),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("keyword_search failed for query '%s': %s", query, exc)
+            return []
+
+        results: list[SearchResult] = []
+        for row in rows:
+            rank = float(row["rank"]) if row["rank"] is not None else 0.0
+            similarity = rank / (1.0 + rank)
+            metadata = row["metadata"] if isinstance(row["metadata"], dict) else json.loads(row["metadata"])
+            results.append(
+                {
+                    "id": row["id"],
+                    "chunk_id": row["chunk_id"],
+                    "document_id": row["document_id"],
+                    "text": row["text"],
+                    "metadata": metadata,
+                    "distance": 1.0 - similarity,
                     "similarity": similarity,
                 }
             )

@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import settings
 from src.embeddings.qwen_embedding import QwenEmbedding
+from src.embeddings.ollama_embedding import OllamaEmbedding
 from src.embeddings.google_embedding import GoogleEmbedding
 from src.llm.sllm import SLLMChat
 from src.vectordb.vector_store import VectorStore
@@ -168,3 +169,6 @@ def isolate_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "log_directory", tmp_path / "logs")
     monkeypatch.setattr(settings, "allowed_ingest_root", tmp_path)
     monkeypatch.setattr(settings, "similarity_threshold", -1.0)  # accept all in tests by default
+    # Force the SQLite backend so tests never touch a live PostgreSQL
+    # instance even when the developer's .env selects one.
+    monkeypatch.setattr(settings, "database_backend", "sqlite")
