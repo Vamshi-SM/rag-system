@@ -73,6 +73,12 @@ class Settings:
     chunk_overlap: int = field(default_factory=lambda: _get_int("CHUNK_OVERLAP", 100))
 
     # --- Embeddings (SharedLLM / OpenAI-compatible API) ---
+    #: Which embedding provider the API wires up at startup:
+    #: "ollama" (local, no key needed), "sharedllm" (OpenAI-compatible
+    #: remote), or "google" (Vertex AI text-embedding models).
+    embedding_backend: str = field(
+        default_factory=lambda: os.getenv("EMBEDDING_BACKEND", "ollama")
+    )
     sllm_api_key: str = field(
         default_factory=lambda: os.getenv("SHAREDLLM_API_KEY", os.getenv("SLLM_API_KEY", ""))
     )
@@ -84,6 +90,10 @@ class Settings:
     )
     ollama_base_url: str = field(
         default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    )
+    #: Model served by the local Ollama embedder (``ollama pull`` name).
+    ollama_embedding_model: str = field(
+        default_factory=lambda: os.getenv("OLLAMA_EMBEDDING_MODEL", "qwen3-embedding:0.6b")
     )
     embedding_model: str = field(
     default_factory=lambda: os.getenv(

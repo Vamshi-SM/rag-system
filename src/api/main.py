@@ -29,6 +29,8 @@ from src.api.exceptions import register_exception_handlers
 from src.api.middleware import RequestLoggingMiddleware
 from src.api.routes import router
 from src.config import settings
+from src.embeddings.google_embedding import GoogleEmbedding
+from src.embeddings.ollama_embedding import OllamaEmbedding
 from src.embeddings.qwen_embedding import QwenEmbedding
 from src.ingestion.ingestion_service import IngestionService
 from src.llm.sllm import SLLMChat
@@ -46,6 +48,32 @@ TAGS_METADATA = [
 ]
 
 
+def _build_embedder():
+    """Construct the embedding provider selected by ``EMBEDDING_BACKEND``."""
+    if settings.embedding_backend == "ollama":
+        return OllamaEmbedding(
+            base_url=settings.ollama_base_url,
+            model=settings.ollama_embedding_model,
+            batch_size=settings.embedding_batch_size,
+            timeout=settings.embedding_timeout,
+            max_retries=settings.embedding_max_retries,
+        )
+    if settings.embedding_backend == "google":
+        return GoogleEmbedding(
+            project_id=settings.gcp_project_id,
+            location=settings.gcp_location,
+            model=settings.embedding_model,
+        )
+    return QwenEmbedding(
+        api_key=settings.sllm_api_key,
+        base_url=settings.sllm_base_url,
+        model=settings.embedding_model,
+        batch_size=settings.embedding_batch_size,
+        timeout=settings.embedding_timeout,
+        max_retries=settings.embedding_max_retries,
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Build all shared, long-lived components once at startup and
@@ -54,21 +82,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings.ensure_directories()
     logger.info("Starting RAG API - initializing shared components...")
 
-    embedder = QwenEmbedding(
-        api_key=settings.sllm_api_key,
-        base_url=settings.sllm_base_url,
-        model=settings.embedding_model,
-        batch_size=settings.embedding_batch_size,
-        timeout=settings.embedding_timeout,
-        max_retries=settings.embedding_max_retries,
-    )
+    embedder = _build_embedder()
     vector_store = VectorStore(database_path=settings.database_path, default_top_k=settings.top_k)
     llm = SLLMChat(
-        api_key=settings.sllm_api_key,
-        base_url=settings.chat_base_url,   # Ollama-compat endpoint for chat
-        model=settings.chat_model,
-        timeout=settings.request_timeout,
-        max_retries=settings.llm_max_retries,
+        project_id=settings.gcp_project_id,
+        location=settings.gcp_location,
+        model=settings.gemini_model,
     )
     retriever = Retriever(
         embedder=embedder,

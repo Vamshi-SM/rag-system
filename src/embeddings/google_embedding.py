@@ -24,15 +24,25 @@ class GoogleEmbedding(BaseEmbedding):
         model: str = "text-embedding-004",
         batch_size: int = 8,
     ):
-        self.client = genai.Client(
-            vertexai=True,
-            project=project_id,
-            location=location,
-        )
-
+        self.project_id = project_id
+        self.location = location
         self.model = model
         self.batch_size = batch_size
         self._dimensions = None
+        # The genai.Client resolves credentials at construction time; build
+        # it lazily so the API can start (and serve LLM/embedding-free
+        # routes like /query/latency and /stats) before GCP credentials
+        # are configured.
+        self.client = None
+
+    def _ensure_client(self):
+        if self.client is None:
+            self.client = genai.Client(
+                vertexai=True,
+                project=self.project_id,
+                location=self.location,
+            )
+        return self.client
 
     @property
     def dimensions(self) -> int | None:
@@ -47,7 +57,7 @@ class GoogleEmbedding(BaseEmbedding):
 
         for attempt in range(max_retries):
             try:
-                return self.client.models.embed_content(
+                return self._ensure_client().models.embed_content(
                     model=self.model,
                     contents=contents,
                     config=EmbedContentConfig(

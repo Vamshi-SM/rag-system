@@ -33,7 +33,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.llm.base_llm import LLMError
-from src.llm.sllm import SharedLLMChat, SLLMChat  # canonical import path
+from src.llm.sharedllm_chat import SharedLLMChat, SLLMChat  # canonical import path
 
 
 # ---------------------------------------------------------------------------

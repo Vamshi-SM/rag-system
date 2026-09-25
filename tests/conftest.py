@@ -29,6 +29,7 @@ from src.config import settings
 from src.embeddings.qwen_embedding import QwenEmbedding
 from src.embeddings.ollama_embedding import OllamaEmbedding
 from src.embeddings.google_embedding import GoogleEmbedding
+from src.llm.gemini_chat import GeminiChat
 from src.llm.sllm import SLLMChat
 from src.vectordb.vector_store import VectorStore
 
@@ -132,15 +133,32 @@ def patch_embedding_api(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture
 def patch_llm_api(monkeypatch: pytest.MonkeyPatch):
-    """Patch SLLMChat._call_api with a canned, offline fake response."""
+    """Patch GeminiChat (SLLMChat's current alias) with offline fakes.
 
-    def fake_call_api(self: SLLMChat, messages: list[dict]) -> str:
+    The constructor is faked too, so no real ``genai.Client`` (which
+    would require GCP credentials) is ever created during tests.
+    """
+
+    def fake_init(self, *args, **kwargs) -> None:
+        self.client = None
+        self.model = "gemini-2.5-flash"
+
+    def fake_generate(self, prompt: str) -> str:
         # Echo back a short canned answer; tests assert on presence of
         # sources/behavior rather than exact LLM wording.
         return "Based on the provided context, here is the answer."
 
-    monkeypatch.setattr(SLLMChat, "_call_api", fake_call_api)
-    return fake_call_api
+    def fake_chat(self, messages: list[dict]) -> str:
+        return fake_generate(self, "")
+
+    def fake_stream(self, messages: list[dict]):
+        yield fake_generate(self, "")
+
+    monkeypatch.setattr(GeminiChat, "__init__", fake_init)
+    monkeypatch.setattr(GeminiChat, "generate", fake_generate)
+    monkeypatch.setattr(GeminiChat, "chat", fake_chat)
+    monkeypatch.setattr(GeminiChat, "stream", fake_stream)
+    return fake_generate
 
 
 @pytest.fixture

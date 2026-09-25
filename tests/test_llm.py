@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from src.llm.base_llm import LLMError
-from src.llm.sllm import SLLMChat
+from src.llm.sharedllm_chat import SLLMChat
 
 
 class TestSLLMChat:

@@ -187,15 +187,17 @@ Interactive API documentation is available at:
 - `http://localhost:8000/docs`
 - `http://localhost:8000/redoc`
 
-Routes are `POST /ingest`, `POST /query`, `GET /health`, and `GET /stats`.
+Routes are `POST /ingest`, `POST /query`, `POST /query/latency`, `GET /health`,
+and `GET /stats`.
 The ingest route only accepts folders inside `ALLOWED_INGEST_ROOT`.
 
-Important: `src/api/main.py` currently constructs `QwenEmbedding` and the
-`SLLMChat` compatibility wrapper, while `src/llm/sllm.py` currently aliases
-that wrapper to `GeminiChat`. The API therefore does not yet match the active
-Google `.env` configuration. Use the CLI for the verified current workflow,
-or align the API constructors and credentials before using this server in a
-real deployment.
+The API wires its LLM from `SLLMChat` (currently aliased to `GeminiChat`,
+constructed with `GCP_PROJECT_ID` / `GCP_LOCATION` / `GEMINI_MODEL`) and its
+embedder from `EMBEDDING_BACKEND` (`ollama` by default — the local Ollama
+`qwen3-embedding:0.6b` model; also supports `sharedllm` and `google`). Both
+clients are constructed lazily on first use, so the server starts even before
+credentials are configured — `/health` then reports those services as
+`offline` while retrieval-only routes (`/stats`, `/query/latency`) keep working.
 
 ## Optional Upload Watcher and UI
 
@@ -224,6 +226,19 @@ curl.exe -X POST http://localhost:8000/query `
   -H "Content-Type: application/json" `
   -d '{"question":"What is our refund policy?"}'
 ```
+
+Benchmark retrieval-only latency (embeds, searches, and ranks but never
+calls the LLM, so no answer is generated):
+
+```powershell
+curl.exe -X POST http://localhost:8000/query/latency `
+  -H "Content-Type: application/json" `
+  -d '{"question":"What is our refund policy?","runs":5,"top_k":5}'
+```
+
+The response reports per-run times (`run_times_ms`), avg/min/max, a
+per-stage breakdown (`stages`: query embedding, vector search, keyword
+search, fusion, ranking), and the chunks/scores the last run retrieved.
 
 Check status:
 

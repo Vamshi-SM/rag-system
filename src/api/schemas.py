@@ -128,6 +128,121 @@ class QueryResponse(BaseModel):
 
 
 # --------------------------------------------------------------------- #
+# /query/latency
+# --------------------------------------------------------------------- #
+
+
+class LatencyRequest(BaseModel):
+    """Request body for ``POST /query/latency`` (retrieval-only benchmark)."""
+
+    question: str = Field(..., min_length=1, description="The natural-language question to ask.")
+    top_k: int | None = Field(None, ge=1, le=50, description="Override the default top-K chunks.")
+    similarity_threshold: float | None = Field(
+        None, ge=-1.0, le=1.0, description="Override the default minimum similarity score."
+    )
+    filename: str | None = Field(None, description="Restrict retrieval to a specific filename.")
+    runs: int = Field(
+        1,
+        ge=1,
+        le=25,
+        description="Number of retrieval passes to time (avg/min/max reported).",
+    )
+
+    @field_validator("question")
+    @classmethod
+    def question_must_not_be_blank(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("question must not be blank")
+        return stripped
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "question": "How does Council GPT perform embeddings?",
+                    "top_k": 5,
+                    "runs": 5,
+                }
+            ]
+        }
+    }
+
+
+class StageTiming(BaseModel):
+    """Per-stage timing, averaged over the measured runs."""
+
+    stage: str = Field(..., description="Stage name (embed, vector search, fusion, rank).")
+    milliseconds: float = Field(..., description="Average wall-clock time per run, in ms.")
+    calls: int = Field(..., description="How many times the stage ran across all runs.")
+
+
+class ChunkModel(BaseModel):
+    """A retrieved chunk, with its text, for inspection of what the
+    retriever actually returned."""
+
+    filename: str
+    page: int | None = None
+    score: float
+    text: str
+
+
+class LatencyResponse(BaseModel):
+    """Response body for ``POST /query/latency``.
+
+    Retrieval-only: the LLM is never called, so the timings isolate the
+    embed + search + fusion + ranking cost of a query.
+    """
+
+    runs: int = Field(..., description="Number of retrieval passes performed.")
+    retrieved_chunks: int = Field(..., description="Chunks returned by the final run.")
+    top_score: float | None = Field(None, description="Similarity score of the top chunk.")
+    sources: list[SourceModel] = Field(default_factory=list)
+    chunks: list[ChunkModel] = Field(
+        default_factory=list,
+        description="The chunks retrieved by the final run, including their full text.",
+    )
+    run_times_ms: list[float] = Field(..., description="Total retrieval time per run, in ms.")
+    avg_ms: float
+    min_ms: float
+    max_ms: float
+    stages: list[StageTiming] = Field(
+        default_factory=list, description="Per-stage timings averaged per run."
+    )
+    latency: str = Field(..., description="Formatted average retrieval latency.")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "runs": 5,
+                    "retrieved_chunks": 5,
+                    "top_score": 0.87,
+                    "sources": [{"filename": "doc1.pdf", "page": 2, "score": 0.87}],
+                    "chunks": [
+                        {
+                            "filename": "doc1.pdf",
+                            "page": 2,
+                            "score": 0.87,
+                            "text": "Refunds are available within 30 days...",
+                        }
+                    ],
+                    "run_times_ms": [142.1, 138.4, 141.9, 140.2, 139.8],
+                    "avg_ms": 140.48,
+                    "min_ms": 138.4,
+                    "max_ms": 142.1,
+                    "stages": [
+                        {"stage": "2. query embedding", "milliseconds": 95.2, "calls": 5},
+                        {"stage": "3. vector similarity search", "milliseconds": 12.6, "calls": 5},
+                    ],
+                    "latency": "0.14 sec",
+                }
+            ]
+        }
+    }
+
+
+# --------------------------------------------------------------------- #
 # /health
 # --------------------------------------------------------------------- #
 

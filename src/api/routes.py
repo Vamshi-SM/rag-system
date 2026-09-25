@@ -1,8 +1,10 @@
-"""API routes: POST /ingest, POST /query, GET /health, GET /stats.
+"""API routes: POST /ingest, POST /query, POST /query/latency, GET /health,
+GET /stats.
 
 All business logic is delegated to existing Phase 2-8 modules
-(``IngestionService``, ``RAGPipeline``) - these routes are thin: they
-validate input, call the appropriate service, and shape the response.
+(``IngestionService``, ``RAGPipeline``, ``Retriever``) - these routes are
+thin: they validate input, call the appropriate service, and shape the
+response.
 """
 
 from __future__ import annotations
@@ -18,16 +20,26 @@ from src.api.dependencies import (
     get_ingestion_service,
     get_llm,
     get_rag_pipeline,
+    get_retriever,
     get_vector_store,
 )
-from src.api.exceptions import FolderNotFoundError, NoDocumentsFoundError, PathNotAllowedError
+from src.api.exceptions import (
+    FolderNotFoundError,
+    NoDocumentsFoundError,
+    PathNotAllowedError,
+    ServiceUnavailableError,
+)
 from src.api.schemas import (
+    ChunkModel,
     HealthResponse,
     IngestRequest,
     IngestResponse,
+    LatencyRequest,
+    LatencyResponse,
     QueryRequest,
     QueryResponse,
     SourceModel,
+    StageTiming,
     StatsResponse,
 )
 from src.config import settings
@@ -35,7 +47,9 @@ from src.embeddings.base_embedding import BaseEmbedding
 from src.ingestion.ingestion_service import IngestionService
 from src.llm.base_llm import BaseLLM
 from src.rag.rag_pipeline import RAGPipeline
+from src.retrieval.retriever import RetrievalError, Retriever, RetrievedChunk
 from src.utils.logger import get_logger
+from src.utils.profiler import Profiler, use_profiler
 from src.vectordb.vector_store import VectorStore
 
 logger = get_logger(__name__)
@@ -153,6 +167,112 @@ async def query_documents(
         sources=sources,
         retrieved_chunks=len(response.chunks_used),
         latency=_format_duration(response.elapsed_seconds),
+    )
+
+
+@router.post(
+    "/query/latency",
+    response_model=LatencyResponse,
+    tags=["Query"],
+    summary="Measure retrieval-only latency (no LLM call)",
+    description=(
+        "Runs the retrieval half of the pipeline only - query embedding, "
+        "vector search, keyword search, RRF fusion, and filtering/ranking. "
+        "The prompt is never built and the LLM is never called, so the "
+        "reported timings isolate exactly how long a query spends before "
+        "answer generation. Set ``runs`` (up to 25) to repeat the same "
+        "question and get avg/min/max plus a per-stage breakdown."
+    ),
+    responses={
+        422: {"description": "Validation error (e.g. blank question, out-of-range runs)"},
+        503: {"description": "Embedding service or vector store unreachable"},
+    },
+)
+async def query_latency(
+    request: LatencyRequest,
+    retriever: Retriever = Depends(get_retriever),
+) -> LatencyResponse:
+    """Benchmark retrieval-only latency for ``request.question``."""
+
+    def _benchmark() -> tuple[Profiler, list[float], list[RetrievedChunk]]:
+        # A single Profiler scopes all runs; per-stage entries accumulate,
+        # so each StageTiming reports the average across ``runs`` passes.
+        profiler = Profiler()
+        run_times: list[float] = []
+        chunks: list[RetrievedChunk] = []
+        with use_profiler(profiler):
+            for _ in range(request.runs):
+                run_start = time.perf_counter()
+                chunks = retriever.retrieve_with_scores(
+                    request.question,
+                    top_k=request.top_k,
+                    similarity_threshold=request.similarity_threshold,
+                    filename=request.filename,
+                )
+                run_times.append(time.perf_counter() - run_start)
+        return profiler, run_times, chunks
+
+    logger.info(
+        "Latency test requested: '%s' (runs=%d, top_k=%s)",
+        request.question,
+        request.runs,
+        request.top_k,
+    )
+
+    try:
+        profiler, run_times, chunks = await run_in_threadpool(_benchmark)
+    except RetrievalError as exc:
+        logger.error("Latency test failed (retrieval error): %s", exc)
+        raise ServiceUnavailableError(f"Retrieval failed: {exc}") from exc
+
+    avg_seconds = sum(run_times) / len(run_times)
+    stages = [
+        StageTiming(
+            stage=name,
+            milliseconds=entry["seconds"] / entry["count"] * 1000.0,
+            calls=int(entry["count"]),
+        )
+        for name, entry in profiler.stages.items()
+    ]
+
+    sources = [
+        SourceModel(
+            filename=chunk["metadata"].get("filename", "unknown"),
+            page=chunk["metadata"].get("page"),
+            score=chunk["score"],
+        )
+        for chunk in chunks
+    ]
+
+    retrieved_chunks_full = [
+        ChunkModel(
+            filename=chunk["metadata"].get("filename", "unknown"),
+            page=chunk["metadata"].get("page"),
+            score=chunk["score"],
+            text=chunk["text"],
+        )
+        for chunk in chunks
+    ]
+
+    logger.info(
+        "Latency test finished: %d runs, avg %.1fms, %d chunks retrieved",
+        len(run_times),
+        avg_seconds * 1000.0,
+        len(chunks),
+    )
+
+    return LatencyResponse(
+        runs=len(run_times),
+        retrieved_chunks=len(chunks),
+        top_score=chunks[0]["score"] if chunks else None,
+        sources=sources,
+        chunks=retrieved_chunks_full,
+        run_times_ms=[t * 1000.0 for t in run_times],
+        avg_ms=avg_seconds * 1000.0,
+        min_ms=min(run_times) * 1000.0,
+        max_ms=max(run_times) * 1000.0,
+        stages=stages,
+        latency=_format_duration(avg_seconds),
     )
 
 

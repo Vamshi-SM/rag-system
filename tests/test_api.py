@@ -171,12 +171,96 @@ class TestQueryEndpoint:
         assert response.json()["retrieved_chunks"] <= 1
 
 
+class TestQueryLatencyEndpoint:
+    def test_latency_after_ingestion_returns_timings(
+        self, client: TestClient, sample_documents_dir: Path
+    ) -> None:
+        client.post("/ingest", json={"folder": str(sample_documents_dir)})
+
+        response = client.post(
+            "/query/latency", json={"question": "What is the refund policy?"}
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["runs"] == 1
+        assert len(body["run_times_ms"]) == 1
+        assert body["avg_ms"] >= 0
+        assert body["min_ms"] <= body["avg_ms"] <= body["max_ms"]
+        assert body["retrieved_chunks"] >= 0
+        assert "sec" in body["latency"]
+        assert len(body["chunks"]) == body["retrieved_chunks"]
+        for chunk in body["chunks"]:
+            assert "filename" in chunk
+            assert "score" in chunk
+            assert isinstance(chunk["text"], str)
+        stage_names = [stage["stage"] for stage in body["stages"]]
+        assert stage_names, "per-stage timings should be reported"
+        assert any("embedding" in name.lower() for name in stage_names)
+        assert any("search" in name.lower() for name in stage_names)
+
+    def test_latency_multiple_runs_aggregates_stats(
+        self, client: TestClient, sample_documents_dir: Path
+    ) -> None:
+        client.post("/ingest", json={"folder": str(sample_documents_dir)})
+
+        response = client.post(
+            "/query/latency", json={"question": "What is the refund policy?", "runs": 3}
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["runs"] == 3
+        assert len(body["run_times_ms"]) == 3
+        assert body["min_ms"] <= body["avg_ms"] <= body["max_ms"]
+        for stage in body["stages"]:
+            assert stage["calls"] >= 1
+
+    def test_latency_never_calls_the_llm(
+        self, client: TestClient, sample_documents_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client.post("/ingest", json={"folder": str(sample_documents_dir)})
+
+        def _must_not_be_called(*args, **kwargs) -> str:
+            raise AssertionError("LLM must not be called by /query/latency")
+
+        monkeypatch.setattr(client.app.state.llm, "generate", _must_not_be_called)
+
+        response = client.post("/query/latency", json={"question": "refund policy?"})
+        assert response.status_code == 200
+        assert response.json()["retrieved_chunks"] >= 0
+
+    def test_latency_on_empty_store_still_returns_timings(self, client: TestClient) -> None:
+        response = client.post("/query/latency", json={"question": "Anything?"})
+        assert response.status_code == 200
+        body = response.json()
+        assert body["retrieved_chunks"] == 0
+        assert body["top_score"] is None
+        assert body["sources"] == []
+
+    def test_latency_blank_question_returns_422(self, client: TestClient) -> None:
+        response = client.post("/query/latency", json={"question": "   "})
+        assert response.status_code == 422
+
+    def test_latency_missing_field_returns_422(self, client: TestClient) -> None:
+        response = client.post("/query/latency", json={})
+        assert response.status_code == 422
+
+    def test_latency_runs_out_of_range_returns_422(self, client: TestClient) -> None:
+        response = client.post("/query/latency", json={"question": "test", "runs": 0})
+        assert response.status_code == 422
+
+    def test_latency_top_k_out_of_range_returns_422(self, client: TestClient) -> None:
+        response = client.post("/query/latency", json={"question": "test", "top_k": 0})
+        assert response.status_code == 422
+
+
 class TestSwaggerDocs:
     def test_openapi_json_lists_all_endpoints(self, client: TestClient) -> None:
         response = client.get("/openapi.json")
         assert response.status_code == 200
         paths = response.json()["paths"]
-        assert set(paths.keys()) == {"/ingest", "/query", "/health", "/stats"}
+        assert set(paths.keys()) == {"/ingest", "/query", "/query/latency", "/health", "/stats"}
 
     def test_docs_ui_available(self, client: TestClient) -> None:
         response = client.get("/docs")
