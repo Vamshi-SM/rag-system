@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from google import genai
 from google.genai.types import EmbedContentConfig
@@ -24,11 +25,19 @@ class GoogleEmbedding(BaseEmbedding):
         model: str = "text-embedding-004",
         batch_size: int = 8,
     ):
-        self.client = genai.Client(
-            vertexai=True,
-            project=project_id,
-            location=location,
-        )
+        api_key = os.getenv("GOOGLE_API_KEY")
+        self._output_dimensionality = None
+        if api_key:
+            self.client = genai.Client(api_key=api_key)
+            if not model.startswith("gemini-embedding"):
+                model = "gemini-embedding-001"
+            self._output_dimensionality = 768
+        else:
+            self.client = genai.Client(
+                vertexai=True,
+                project=project_id,
+                location=location,
+            )
 
         self.model = model
         self.batch_size = batch_size
@@ -52,6 +61,7 @@ class GoogleEmbedding(BaseEmbedding):
                     contents=contents,
                     config=EmbedContentConfig(
                         task_type=task_type,
+                        output_dimensionality=self._output_dimensionality,
                     ),
                 )
             except ClientError as e:

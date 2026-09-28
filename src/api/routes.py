@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from starlette.concurrency import run_in_threadpool
 
 from src.api.dependencies import (
@@ -18,6 +19,7 @@ from src.api.dependencies import (
     get_ingestion_service,
     get_llm,
     get_rag_pipeline,
+    get_retriever,
     get_vector_store,
 )
 from src.api.exceptions import FolderNotFoundError, NoDocumentsFoundError, PathNotAllowedError
@@ -27,6 +29,9 @@ from src.api.schemas import (
     IngestResponse,
     QueryRequest,
     QueryResponse,
+    RetrieveRequest,
+    RetrieveResponse,
+    RetrievedChunkModel,
     SourceModel,
     StatsResponse,
 )
@@ -35,6 +40,7 @@ from src.embeddings.base_embedding import BaseEmbedding
 from src.ingestion.ingestion_service import IngestionService
 from src.llm.base_llm import BaseLLM
 from src.rag.rag_pipeline import RAGPipeline
+from src.retrieval.retriever import Retriever
 from src.utils.logger import get_logger
 from src.vectordb.vector_store import VectorStore
 
@@ -153,6 +159,61 @@ async def query_documents(
         sources=sources,
         retrieved_chunks=len(response.chunks_used),
         latency=_format_duration(response.elapsed_seconds),
+    )
+
+
+@router.get(
+    "/retrieve",
+    response_model=RetrieveResponse,
+    tags=["Query"],
+    summary="Retrieve chunks only - the LLM is never called",
+    description=(
+        "Embeds the question, retrieves the top-K most relevant chunks from the "
+        "vector store (hybrid vector + keyword search with RRF fusion), and "
+        "returns them with source attribution and retrieval latency. Unlike "
+        "POST /query, no prompt is built and no LLM is invoked - useful for "
+        "inspecting retrieval quality in isolation. All inputs are query "
+        "parameters: /retrieve?question=...&top_k=3&filename=...&similarity_threshold=0.2"
+    ),
+    responses={422: {"description": "Validation error (e.g. blank or missing question)"}},
+)
+async def retrieve_chunks(
+    params: Annotated[RetrieveRequest, Query()],
+    retriever: Retriever = Depends(get_retriever),
+) -> RetrieveResponse:
+    """Retrieve ``params.question``'s top-K chunks without LLM generation."""
+    logger.info("Retrieval requested: '%s'", params.question)
+
+    start_time = time.time()
+    chunks = await run_in_threadpool(
+        retriever.retrieve_with_scores,
+        params.question,
+        top_k=params.top_k,
+        similarity_threshold=params.similarity_threshold,
+        filename=params.filename,
+    )
+    elapsed = time.time() - start_time
+    logger.info(
+        "Retrieval finished: %d chunks returned for '%s' (%.2fs)",
+        len(chunks),
+        params.question,
+        elapsed,
+    )
+
+    return RetrieveResponse(
+        query=params.question,
+        chunks=[
+            RetrievedChunkModel(
+                chunk_id=chunk["metadata"].get("chunk_id"),
+                text=chunk["text"],
+                filename=chunk["metadata"].get("filename", "unknown"),
+                page=chunk["metadata"].get("page"),
+                score=chunk["score"],
+            )
+            for chunk in chunks
+        ],
+        retrieved_chunks=len(chunks),
+        latency=_format_duration(elapsed),
     )
 
 

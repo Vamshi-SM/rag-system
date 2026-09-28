@@ -29,6 +29,7 @@ from src.config import settings
 from src.embeddings.qwen_embedding import QwenEmbedding
 from src.embeddings.ollama_embedding import OllamaEmbedding
 from src.embeddings.google_embedding import GoogleEmbedding
+from src.llm.gemini_chat import GeminiChat
 from src.llm.sllm import SLLMChat
 from src.vectordb.vector_store import VectorStore
 
@@ -117,7 +118,26 @@ def vector_store(db_path: Path):
 
 @pytest.fixture
 def patch_embedding_api(monkeypatch: pytest.MonkeyPatch):
-    """Patch QwenEmbedding._call_api with a deterministic, offline fake."""
+    """Patch embedding providers with a deterministic, offline fake.
+
+    Covers both the legacy ``_call_api`` seam (Qwen/Ollama, used by the
+    ``embedder`` fixture) and the active ``GoogleEmbedding`` path used by
+    the API lifespan (patched at ``_embed_with_retry``, which returns the
+    google-genai response shape: ``response.embeddings[i].values``).
+    """
+
+    class _FakeEmbedResponse:
+        def __init__(self, vectors: list[list[float]]) -> None:
+            from types import SimpleNamespace
+
+            self.embeddings = [SimpleNamespace(values=v) for v in vectors]
+
+    def fake_embed_with_retry(self, contents, task_type: str = "RETRIEVAL_DOCUMENT"):  # noqa: ANN001
+        texts = contents if isinstance(contents, list) else [contents]
+        vectors = [_deterministic_vector(text) for text in texts]
+        if vectors and getattr(self, "_dimensions", None) is None:
+            self._dimensions = len(vectors[0])
+        return _FakeEmbedResponse(vectors)
 
     def fake_call_api(self, texts: list[str]) -> list[list[float]]:
         vectors = [_deterministic_vector(text) for text in texts]
@@ -127,20 +147,25 @@ def patch_embedding_api(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(QwenEmbedding, "_call_api", fake_call_api)
     monkeypatch.setattr(OllamaEmbedding, "_call_api", fake_call_api)
+    monkeypatch.setattr(GoogleEmbedding, "_embed_with_retry", fake_embed_with_retry)
     return fake_call_api
 
 
 @pytest.fixture
 def patch_llm_api(monkeypatch: pytest.MonkeyPatch):
-    """Patch SLLMChat._call_api with a canned, offline fake response."""
+    """Patch the LLM provider with a canned, offline fake response.
 
-    def fake_call_api(self: SLLMChat, messages: list[dict]) -> str:
+    The API lifespan builds ``GeminiChat`` (``SLLMChat`` is an alias),
+    so the seam is ``GeminiChat.generate``.
+    """
+
+    def fake_generate(self, prompt: str) -> str:  # noqa: ANN001
         # Echo back a short canned answer; tests assert on presence of
         # sources/behavior rather than exact LLM wording.
         return "Based on the provided context, here is the answer."
 
-    monkeypatch.setattr(SLLMChat, "_call_api", fake_call_api)
-    return fake_call_api
+    monkeypatch.setattr(GeminiChat, "generate", fake_generate)
+    return fake_generate
 
 
 @pytest.fixture
@@ -150,9 +175,9 @@ def embedder(patch_embedding_api) -> QwenEmbedding:
 
 
 @pytest.fixture
-def llm(patch_llm_api) -> SLLMChat:
-    """An SLLMChat instance wired to the offline fake API."""
-    return SLLMChat(api_key="test-key", base_url="https://fake-sllm.test/v1", model="test-chat")
+def llm(patch_llm_api) -> GeminiChat:
+    """A GeminiChat instance wired to the offline fake API."""
+    return GeminiChat(project_id="test-project", model="test-chat")
 
 
 @pytest.fixture(autouse=True)

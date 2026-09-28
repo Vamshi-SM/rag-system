@@ -363,6 +363,7 @@ class VectorStore:
         for row in rows:
             rank = row["rank"] if row["rank"] is not None else 0.0
             similarity = 1.0 / (1.0 + abs(float(rank)))
+            metadata = row["metadata"] if isinstance(row["metadata"], dict) else json.loads(row["metadata"])
             results.append(
                 {
                     "id": row["id"],

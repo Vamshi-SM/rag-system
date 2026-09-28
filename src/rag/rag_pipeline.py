@@ -133,11 +133,25 @@ class RAGPipeline:
                     answer_text = self.llm.generate(prompt)
             except LLMError as exc:
                 logger.error("RAG pipeline: LLM generation failed for question '%s': %s", question, exc)
-                return RAGResponse(
-                    answer=(
+                message = str(exc)
+                if "429" in message or "RESOURCE_EXHAUSTED" in message:
+                    answer = (
+                        "I retrieved relevant context, but the AI service's request "
+                        "quota is exhausted right now. Free-tier limits reset daily - "
+                        "try again later or enable billing on the API key."
+                    )
+                elif "503" in message or "UNAVAILABLE" in message:
+                    answer = (
+                        "I retrieved relevant context, but the language model is "
+                        "temporarily overloaded. Please try again in a minute."
+                    )
+                else:
+                    answer = (
                         "I retrieved relevant context but couldn't generate an answer "
                         "right now (the language model is unavailable). Please try again shortly."
-                    ),
+                    )
+                return RAGResponse(
+                    answer=answer,
                     sources=build_sources(chunks),
                     chunks_used=chunks,
                     used_llm=False,

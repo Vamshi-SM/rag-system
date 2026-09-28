@@ -128,6 +128,76 @@ class QueryResponse(BaseModel):
 
 
 # --------------------------------------------------------------------- #
+# /retrieve
+# --------------------------------------------------------------------- #
+
+
+class RetrieveRequest(BaseModel):
+    """Query parameters for ``GET /retrieve`` (retrieval only, no LLM)."""
+
+    question: str = Field(..., min_length=1, description="The natural-language query to retrieve chunks for.")
+    top_k: int | None = Field(None, ge=1, le=50, description="Override the default top-K chunks.")
+    similarity_threshold: float | None = Field(
+        None, ge=-1.0, le=1.0, description="Override the default minimum similarity score."
+    )
+    filename: str | None = Field(None, description="Restrict retrieval to a specific filename.")
+
+    @field_validator("question")
+    @classmethod
+    def question_must_not_be_blank(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("question must not be blank")
+        return stripped
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"question": "What is the refund policy?", "top_k": 3}]
+        }
+    }
+
+
+class RetrievedChunkModel(BaseModel):
+    """A single retrieved chunk with its source attribution."""
+
+    chunk_id: str | None = Field(None, description="Stable chunk identifier, when available.")
+    text: str = Field(..., description="The chunk text as stored.")
+    filename: str = Field(..., description="Source document filename.")
+    page: int | None = Field(None, description="Page number for paginated sources (PDF).")
+    score: float = Field(..., description="Fused relevance score of the chunk.")
+
+
+class RetrieveResponse(BaseModel):
+    """Response body for ``POST /retrieve``."""
+
+    query: str = Field(..., description="The query that was embedded and searched.")
+    chunks: list[RetrievedChunkModel] = Field(default_factory=list)
+    retrieved_chunks: int = Field(..., description="Number of chunks returned.")
+    latency: str = Field(..., description="Wall-clock time for the retrieval step only.")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "query": "What is the refund policy?",
+                    "chunks": [
+                        {
+                            "chunk_id": "c0a8...",
+                            "text": "Refunds are available within 30 days of purchase...",
+                            "filename": "sample_refund_policy.txt",
+                            "page": None,
+                            "score": 0.94,
+                        }
+                    ],
+                    "retrieved_chunks": 1,
+                    "latency": "0.31 sec",
+                }
+            ]
+        }
+    }
+
+
+# --------------------------------------------------------------------- #
 # /health
 # --------------------------------------------------------------------- #
 

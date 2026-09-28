@@ -29,9 +29,9 @@ from src.api.exceptions import register_exception_handlers
 from src.api.middleware import RequestLoggingMiddleware
 from src.api.routes import router
 from src.config import settings
-from src.embeddings.qwen_embedding import QwenEmbedding
+from src.embeddings.google_embedding import GoogleEmbedding
 from src.ingestion.ingestion_service import IngestionService
-from src.llm.sllm import SLLMChat
+from src.llm.gemini_chat import GeminiChat
 from src.rag.rag_pipeline import RAGPipeline
 from src.retrieval.retriever import Retriever
 from src.utils.logger import get_logger
@@ -54,22 +54,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings.ensure_directories()
     logger.info("Starting RAG API - initializing shared components...")
 
-    embedder = QwenEmbedding(
-        api_key=settings.sllm_api_key,
-        base_url=settings.sllm_base_url,
+    embedder = GoogleEmbedding(
+        project_id=settings.gcp_project_id,
+        location=settings.gcp_location,
         model=settings.embedding_model,
         batch_size=settings.embedding_batch_size,
-        timeout=settings.embedding_timeout,
-        max_retries=settings.embedding_max_retries,
     )
     vector_store = VectorStore(database_path=settings.database_path, default_top_k=settings.top_k)
-    llm = SLLMChat(
-        api_key=settings.sllm_api_key,
-        base_url=settings.chat_base_url,   # Ollama-compat endpoint for chat
-        model=settings.chat_model,
-        timeout=settings.request_timeout,
-        max_retries=settings.llm_max_retries,
-    )
+    llm = GeminiChat(
+        project_id=settings.gcp_project_id,
+        location=settings.gcp_location,
+        model=settings.gemini_model,
+    )  
     retriever = Retriever(
         embedder=embedder,
         vector_store=vector_store,
@@ -84,7 +80,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         similarity_threshold=settings.similarity_threshold,
     )
     ingestion_service = IngestionService(vector_store=vector_store, embedder=embedder)
-
+ 
     app.state.embedder = embedder
     app.state.vector_store = vector_store
     app.state.llm = llm

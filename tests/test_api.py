@@ -171,12 +171,64 @@ class TestQueryEndpoint:
         assert response.json()["retrieved_chunks"] <= 1
 
 
+class TestRetrieveEndpoint:
+    def test_retrieve_returns_chunks_without_llm(
+        self, client: TestClient, sample_documents_dir: Path
+    ) -> None:
+        client.post("/ingest", json={"folder": str(sample_documents_dir)})
+
+        response = client.get("/retrieve", params={"question": "What is the refund policy?"})
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["query"] == "What is the refund policy?"
+        assert body["retrieved_chunks"] >= 1
+        assert "sec" in body["latency"]
+        assert len(body["chunks"]) == body["retrieved_chunks"]
+        for chunk in body["chunks"]:
+            assert chunk["text"]
+            assert chunk["filename"]
+            assert "score" in chunk
+            assert "page" in chunk
+
+    def test_retrieve_on_empty_store_returns_zero_chunks(self, client: TestClient) -> None:
+        response = client.get("/retrieve", params={"question": "Anything?"})
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["retrieved_chunks"] == 0
+        assert body["chunks"] == []
+        assert body["query"] == "Anything?"
+
+    def test_retrieve_blank_question_returns_422(self, client: TestClient) -> None:
+        response = client.get("/retrieve", params={"question": "   "})
+        assert response.status_code == 422
+
+    def test_retrieve_missing_param_returns_422(self, client: TestClient) -> None:
+        response = client.get("/retrieve")
+        assert response.status_code == 422
+
+    def test_retrieve_top_k_out_of_range_returns_422(self, client: TestClient) -> None:
+        response = client.get("/retrieve", params={"question": "test", "top_k": 0})
+        assert response.status_code == 422
+
+    def test_retrieve_respects_top_k(
+        self, client: TestClient, sample_documents_dir: Path
+    ) -> None:
+        client.post("/ingest", json={"folder": str(sample_documents_dir)})
+
+        response = client.get("/retrieve", params={"question": "policy", "top_k": 1})
+
+        assert response.status_code == 200
+        assert response.json()["retrieved_chunks"] <= 1
+
+
 class TestSwaggerDocs:
     def test_openapi_json_lists_all_endpoints(self, client: TestClient) -> None:
         response = client.get("/openapi.json")
         assert response.status_code == 200
         paths = response.json()["paths"]
-        assert set(paths.keys()) == {"/ingest", "/query", "/health", "/stats"}
+        assert set(paths.keys()) == {"/ingest", "/query", "/retrieve", "/health", "/stats"}
 
     def test_docs_ui_available(self, client: TestClient) -> None:
         response = client.get("/docs")
