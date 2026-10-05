@@ -255,12 +255,51 @@ class TestQueryLatencyEndpoint:
         assert response.status_code == 422
 
 
+class TestQueryStreamEndpoint:
+    def test_query_stream_emits_sources_tokens_and_done(
+        self, client: TestClient, sample_documents_dir: Path
+    ) -> None:
+        client.post("/ingest", json={"folder": str(sample_documents_dir)})
+
+        with client.stream(
+            "POST", "/query/stream", json={"question": "What is the refund policy?"}
+        ) as response:
+            assert response.status_code == 200
+            assert response.headers["content-type"].startswith("text/event-stream")
+            body = "".join(response.iter_text())
+
+        assert "event: sources" in body
+        assert "event: token" in body
+        assert "event: done" in body
+
+        data_lines = [
+            line[len("data: "):] for line in body.splitlines() if line.startswith("data: ")
+        ]
+        import json
+
+        sources_payload = json.loads(data_lines[0])
+        assert sources_payload["retrieved_chunks"] > 0
+        assert sources_payload["sources"]
+
+        tokens = [json.loads(line) for line in data_lines[1:-1]]
+        assert tokens
+        assert "".join(tokens).strip()
+
+    def test_query_stream_blank_question_still_streams_a_message(
+        self, client: TestClient
+    ) -> None:
+        response = client.post("/query/stream", json={"question": "   "})
+        assert response.status_code == 422  # schema validation rejects blank questions
+
+
 class TestSwaggerDocs:
     def test_openapi_json_lists_all_endpoints(self, client: TestClient) -> None:
         response = client.get("/openapi.json")
         assert response.status_code == 200
         paths = response.json()["paths"]
-        assert set(paths.keys()) == {"/ingest", "/query", "/query/latency", "/health", "/stats"}
+        assert set(paths.keys()) == {
+            "/ingest", "/query", "/query/stream", "/query/latency", "/health", "/stats"
+        }
 
     def test_docs_ui_available(self, client: TestClient) -> None:
         response = client.get("/docs")

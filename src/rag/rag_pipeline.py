@@ -219,4 +219,33 @@ class RAGPipeline:
         sources = build_sources(chunks)
         messages = [{"role": "user", "content": prompt}]
 
-        return self.llm.stream(messages), chunks, sources
+        def stream_with_retry() -> Iterator[str]:
+            """Yield answer tokens, retrying provider rate limits.
+
+            A failed stream cannot resume mid-flight, so the retry window
+            covers stream creation + first token only. Once tokens flow,
+            errors propagate (rare, and not safely retryable anyway).
+            """
+            delays = (0, 30, 60, 120, 240)
+            for attempt, delay in enumerate(delays):
+                if delay:
+                    logger.warning(
+                        "LLM rate limit on stream start; retrying in %ds (attempt %d/%d)",
+                        delay, attempt, len(delays) - 1,
+                    )
+                    time.sleep(delay)
+                try:
+                    iterator = self.llm.stream(messages)
+                    first = next(iterator, None)
+                except StopIteration:
+                    return
+                except Exception as exc:
+                    if "429" in str(exc) and attempt < len(delays) - 1:
+                        continue
+                    raise
+                if first is not None:
+                    yield first
+                yield from iterator
+                return
+
+        return stream_with_retry(), chunks, sources

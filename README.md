@@ -6,12 +6,18 @@ generating grounded answers.
 
 The repository currently contains two backend paths:
 
-- The CLI and Streamlit application use Google Vertex AI through
+- The CLI, Streamlit application, and demo UI use Google Vertex AI through
   `GoogleEmbedding` and `GeminiChat`.
-- The FastAPI application is wired to the older `QwenEmbedding` and
-  `SLLMChat` path and should be treated as a separate, unfinished integration
-  until its credentials and constructor wiring are aligned with the active
-  Google configuration.
+- The FastAPI application selects its embedder from `EMBEDDING_BACKEND`
+  (`ollama`, `local` (fastembed), `sharedllm`, or `google`) and wires its LLM
+  through `SLLMChat` (aliased to `GeminiChat`), so API and CLI paths share the
+  same Google configuration when `EMBEDDING_BACKEND=google`.
+
+On top of the core system, `benchmarks/` measures this hybrid stack against
+Google Vertex AI RAG Engine on a 100 MB legal corpus, and `demo/` provides a
+side-by-side comparison UI with PDF upload and an automated evaluation suite.
+See the "Benchmark vs Vertex AI RAG Engine" and "Upload Demo" sections below.
+Generated reports land in `reports/` (not committed).
 
 The active `.env` selects PostgreSQL with pgvector. SQLite with sqlite-vec is
 also supported when `DATABASE_BACKEND=sqlite`.
@@ -26,23 +32,40 @@ Documents -> Load -> Chunk -> Embed -> Store -> Retrieve -> Prompt -> LLM -> Ans
 rag-system/
 ├── data/
 │   ├── documents/              # Source documents for the normal ingestion CLI
+│   ├── documents_large/        # 100 MB benchmark corpus (re-download via scripts/download_corpus.py)
+│   ├── uploads/                # Demo-server upload working copies
 │   ├── upload_files/           # Files used by the watcher/Streamlit path
 │   └── processed/              # SQLite database when the SQLite backend is used
 ├── src/
 │   ├── loaders/                # PDF, DOCX, TXT, and Markdown loading
 │   ├── chunking/               # Token-aware document chunking
-│   ├── embeddings/             # Qwen/SLLM and Google Vertex AI embedders
-│   ├── vectordb/               # Backend-neutral store, SQLite, and PostgreSQL
+│   ├── embeddings/             # Backend factory: ollama, local (fastembed), sharedllm, google
+│   ├── vectordb/               # Backend-neutral store, SQLite, and PostgreSQL (HNSW + keyword)
 │   ├── ingestion/              # Shared Load -> Dedup -> Chunk -> Embed -> Store flow
-│   ├── retrieval/              # Similarity and metadata-filtered retrieval
+│   ├── retrieval/              # Hybrid retrieval, RAG Engine retriever, optional reranker
 │   ├── rag/                    # Prompt construction and answer pipeline
 │   ├── llm/                    # Gemini and compatibility wrappers
-│   └── api/                    # FastAPI routes and application lifecycle
+│   └── api/                    # FastAPI routes (query + streaming SSE) and lifecycle
+├── benchmarks/                 # Benchmark harness, fixtures, and frozen eval questions
+│   ├── make_case_fixture.py    # Generates the 15-page legal case-file fixture PDF
+│   ├── kestrel_case_questions.jsonl  # 22 frozen questions for the case fixture
+│   ├── queries.jsonl           # Benchmark question set
+│   └── corpus_manifest.json    # Downloaded-corpus checksums
+├── demo/                       # Side-by-side comparison chat UI (upload + test suite)
 ├── scripts/
 │   ├── ingest.py               # Normal batch ingestion CLI
+│   ├── ingest_with_progress.py # Progress-aware ingestion for large corpora
 │   ├── query.py                # CLI query interface
+│   ├── download_corpus.py      # Fetch the 100 MB benchmark corpus
+│   ├── setup_rag_engine.py     # Provision Vertex AI RAG Engine corpus + GCS import
+│   ├── benchmark_compare.py    # End-to-end comparison: local stack vs RAG Engine
+│   ├── benchmark_pgvector.py   # Retrieval quality sweep (thresholds, candidates)
+│   ├── bench_pgvector.py       # pgvector latency micro-benchmark
+│   ├── benchmark_rerank.py     # Cross-encoder reranker evaluation
+│   ├── verify_corpus_data.py   # Corpus sanity checks
 │   ├── watcher.py              # Optional upload-folder watcher
 │   └── app.py                  # Optional Streamlit UI
+├── reports/                    # Generated benchmark reports (gitignored)
 ├── tests/                      # Offline unit and integration tests
 ├── .env.example                # Safe configuration template
 ├── requirements.txt
@@ -123,6 +146,11 @@ will create the configured database directory automatically.
 | `EMBEDDING_BATCH_SIZE` | `32` | Batch size for configured embedding clients |
 | `TOP_K` / `SIMILARITY_THRESHOLD` | `5` / `0.7` | Retrieval defaults |
 | `RETRIEVAL_CANDIDATE_MULTIPLIER` | `4` | Candidate over-fetch factor |
+| `EMBEDDING_BACKEND` | `ollama` | Embedding backend: `ollama`, `local`, `sharedllm`, `google` |
+| `EMBEDDING_TOKEN_BUDGET` | `19000` | Max tokens per embedding request |
+| `RERANKER_ENABLED` / `RERANKER_MODEL` | `false` / `BAAI/bge-reranker-base` | Optional cross-encoder reranking |
+| `PROMPT_MAX_CHUNK_CHARS` / `PROMPT_MAX_CONTEXT_CHARS` | `1800` / `9000` | Prompt context trimming |
+| `RAG_CORPUS_NAME` / `RAG_GCS_BUCKET` | empty | Vertex AI RAG Engine corpus (written by `scripts/setup_rag_engine.py`) |
 | `CHAT_MODEL` | `ollama/kimi-k2.7-code` | Legacy SLLM chat setting |
 | `REQUEST_TIMEOUT` / `LLM_MAX_RETRIES` | `60` / `3` | Legacy chat client settings |
 | `ALLOWED_INGEST_ROOT` | parent of `DATA_DIRECTORY` | API ingestion path boundary |
@@ -198,6 +226,58 @@ embedder from `EMBEDDING_BACKEND` (`ollama` by default — the local Ollama
 clients are constructed lazily on first use, so the server starts even before
 credentials are configured — `/health` then reports those services as
 `offline` while retrieval-only routes (`/stats`, `/query/latency`) keep working.
+
+## Benchmark vs Vertex AI RAG Engine
+
+The `benchmarks/` and `scripts/` directories measure this repository's hybrid
+PostgreSQL stack against a managed Vertex AI RAG Engine corpus on the same
+100 MB legal corpus (223 files, ~50k chunks):
+
+```powershell
+python scripts/download_corpus.py            # fetch corpus into data/documents_large (gitignored)
+python scripts/setup_rag_engine.py           # create corpus, upload to GCS, import into RAG Engine
+python scripts/benchmark_compare.py          # run all phases: quality sweep, streaming E2E, RAG Engine
+```
+
+`reports/FINAL_COMPARISON.md` (generated, not committed) holds the full write-up.
+Measured result on this machine (streaming E2E, 25 questions x 3 runs):
+TTFB p50 2.76 s / p95 4.04 s, full latency p50 2.85 s / p95 4.58 s — end-to-end
+parity with RAG Engine, with no free-tier rate-limit errors. Retrieval quality
+ties RAG Engine on recall while local keeps exact-token precision (BM25 hits
+identifiers like case numbers and dollar amounts that embeddings fuzz).
+
+## Upload Demo (side-by-side comparison)
+
+`demo/` is a self-contained FastAPI server with a ChatGPT-style chat UI that
+runs alongside the production API and compares both engines on every question:
+
+```powershell
+python -m uvicorn src.api.main:app --port 8000     # production API (terminal 1)
+python demo/demo_server.py                          # demo UI at http://127.0.0.1:8001 (terminal 2)
+```
+
+Features:
+
+- **Side-by-side answers**: each question runs against the local hybrid stack
+  (via the production API's streaming route) and a directly grounded Vertex AI
+  RAG Engine client; both answers stream in one chat thread with live TTFB,
+  total time, source hits, and mode badges.
+- **PDF upload with dual indexing**: uploaded files are ingested locally
+  (~seconds) and imported into the Vertex RAG Engine corpus in the background.
+  While the import is pending, RAG answers in an "instant" in-context mode and
+  automatically switches to grounded retrieval once the file is active.
+- **Frozen fixture questions**: uploading the test fixture
+  (`benchmarks/fixtures/kestrel_case_file.pdf`, rebuild with
+  `python benchmarks/make_case_fixture.py`) automatically serves its 22 frozen
+  evaluation questions as clickable chips — no AI question generation. Other
+  uploads get a "Summarize this document" chip.
+- **Automated test suite**: `POST /test-suite` purges both engines of previous
+  fixture copies, re-uploads the fixture, waits for the RAG Engine import, and
+  runs all 22 questions through both engines. The judge scores answers with
+  page-citation assertion (does the local engine cite the exact page), source
+  hits, a demo-grade groundedness score, extraction recall (expected amounts),
+  and refusal detection for negative (absent-fact) questions. Status is
+  pollable at `GET /test-suite/status`.
 
 ## Optional Upload Watcher and UI
 

@@ -1,0 +1,266 @@
+APEX LEGAL SOLUTIONS
+LITIGATION CASE NOTES - INTERNAL WORK PRODUCT
+CONFIDENTIAL - ATTORNEY WORK PRODUCT / ATTORNEY-CLIENT PRIVILEGE
+
+===============================================================================
+CASE CAPTION: NovaTech Systems, Inc. v. GreenStone Logistics Corp.
+CASE ID: LC-2045
+MATTER NUMBER: APX-2024-0113
+COURT: U.S. District Court for the Northern District of Illinois, Eastern Division
+PRESIDING JUDGE: Hon. Margaret Ellison
+FILED: March 3, 2024
+DOCUMENT NUMBER: DOC-LC2045-001
+===============================================================================
+
+CLIENT INFORMATION
+-------------------
+Client: NovaTech Systems, Inc.
+Client ID: CLT-8821
+Client Contact: Michael Anders, Chief Financial Officer
+Client Address: 4400 Innovation Parkway, Suite 900, Chicago, IL 60601
+Client Email: m.anders@novatechsystems.com
+Client Phone: (312) 555-0148
+
+OPPOSING PARTY
+--------------
+Defendant: GreenStone Logistics Corp.
+Defendant Address: 1120 Freight Yard Road, Joliet, IL 60432
+Opposing Counsel: Douglas Fairbanks, Esq., Fairbanks & Reyes LLP
+Opposing Counsel Email: dfairbanks@fairbanksreyes.com
+Opposing Counsel Phone: (630) 555-2290
+
+APEX LEGAL SOLUTIONS TEAM
+--------------------------
+Lead Counsel: Sarah Whitfield, Esq. (Partner, Commercial Litigation)
+Associate Counsel: Marcus Chen, Esq.
+Paralegal: Denise Okafor
+Billing Partner: Sarah Whitfield, Esq.
+Invoice Reference: INV-APX-20456 (March 2024), INV-APX-20512 (April 2024)
+
+-------------------------------------------------------------------------------
+I. CASE BACKGROUND
+-------------------------------------------------------------------------------
+NovaTech Systems, Inc. ("NovaTech" or "Client") entered into a Master Services
+Agreement with GreenStone Logistics Corp. ("GreenStone") on June 14, 2022,
+Contract No. MSA-NT-GS-2022-0087, under which GreenStone agreed to provide
+warehousing and last-mile distribution services for NovaTech's hardware
+division across the Midwest region.
+
+Client alleges that beginning in Q3 2023, GreenStone repeatedly failed to
+meet the service-level commitments set forth in Schedule C (Delivery
+Performance Standards) of the MSA, specifically Section 14.2 (Late Delivery
+Remedies) and Section 9.5 (Warehouse Damage Liability). Client further
+alleges that GreenStone's failures caused approximately $4,250,000 in lost
+sales, expedited freight costs, and customer chargebacks.
+
+Client seeks damages under a breach of contract theory, and in the
+alternative, under a theory of negligent performance. Client also seeks
+attorneys' fees pursuant to Section 22.1 of the MSA (Prevailing Party Fee
+Shifting Clause).
+
+-------------------------------------------------------------------------------
+II. CAUSES OF ACTION
+-------------------------------------------------------------------------------
+Count I: Breach of Contract (MSA-NT-GS-2022-0087, Section 14.2)
+Count II: Breach of Contract (MSA-NT-GS-2022-0087, Section 9.5)
+Count III: Negligence (Warehouse Handling)
+Count IV: Declaratory Judgment re: Indemnification Obligations (Section 18.3)
+
+Damages Sought: $4,250,000, plus pre-judgment interest, costs, and
+reasonable attorneys' fees.
+
+-------------------------------------------------------------------------------
+III. KEY DATES AND DEADLINES
+-------------------------------------------------------------------------------
+- Complaint Filed: March 3, 2024
+- Defendant's Answer Due: April 7, 2024 (Answer filed April 4, 2024)
+- Rule 26(f) Conference: April 18, 2024
+- Fact Discovery Cutoff: October 15, 2024
+- Expert Disclosure Deadline (Plaintiff): November 1, 2024
+- Expert Disclosure Deadline (Defendant): December 1, 2024
+- Dispositive Motion Deadline: January 15, 2025
+- Final Pretrial Conference: April 22, 2025
+- Trial Date (estimated 5-7 days): May 12, 2025
+
+-------------------------------------------------------------------------------
+IV. WITNESS LIST
+-------------------------------------------------------------------------------
+1. Susan Bailey - Supply Chain Director, NovaTech Systems (Client witness)
+   Address: 4400 Innovation Parkway, Suite 900, Chicago, IL 60601
+   Expected testimony: Delivery performance tracking, chargeback records.
+
+2. Daniel Cross - Former Operations Manager, GreenStone Logistics
+   (Fact witness, deposed August 6, 2024)
+   Expected testimony: Warehouse staffing shortfalls in Q3-Q4 2023.
+
+3. Rebecca Torres - Regional Distribution Manager, NovaTech Systems
+   Expected testimony: Customer complaint logs and chargeback documentation.
+
+4. Alan Whitcomb - GreenStone Logistics Chief Operating Officer
+   Expected testimony (adverse witness): Staffing and equipment decisions.
+
+-------------------------------------------------------------------------------
+V. CHRONOLOGICAL CASE LOG
+-------------------------------------------------------------------------------
+2024-01-09: Initial client intake call with Michael Anders. Client described
+recurring late deliveries and damaged inventory at the Joliet, IL warehouse
+facility operated by GreenStone Logistics. Estimated damages at that time:
+$3.8 million. Advised client to preserve all delivery logs and chargeback
+correspondence.
+
+2024-01-22: Follow-up meeting at NovaTech offices with Michael Anders and
+Susan Bailey. Reviewed Contract No. MSA-NT-GS-2022-0087 in full. Identified
+Section 14.2 and Section 9.5 as primary bases for breach claims. Discussed
+demand letter strategy.
+
+2024-02-02: Sent demand letter to GreenStone Logistics General Counsel
+(cc: Douglas Fairbanks) citing breach of Sections 14.2 and 9.5. Demanded
+$4,100,000 in damages and a response within 21 days.
+
+2024-02-24: Received response from GreenStone Logistics denying liability
+and asserting that late deliveries were caused by NovaTech's own delayed
+purchase order releases. GreenStone counter-offered $450,000 to settle.
+Client rejected offer as inadequate.
+
+2024-03-03: Complaint filed in U.S. District Court for the Northern
+District of Illinois. Case assigned to Hon. Margaret Ellison.
+
+2024-03-15: Service of process completed on GreenStone Logistics registered
+agent.
+
+2024-04-04: Defendant filed Answer and Affirmative Defenses. GreenStone
+asserts contributory fault and force majeure (winter storm events of
+December 2023) as affirmative defenses.
+
+2024-04-18: Rule 26(f) discovery planning conference held. Agreed to a
+staggered document production schedule beginning May 1, 2024.
+
+2024-05-01: NovaTech produced approximately 12,400 pages of delivery logs,
+chargeback records, and internal email correspondence (Bates Nos.
+NT-000001 through NT-012400).
+
+2024-06-10: GreenStone produced warehouse staffing records and internal
+incident reports (Bates Nos. GS-000001 through GS-004215). Notably, GreenStone
+production included internal emails suggesting known staffing shortfalls at
+the Joliet facility as early as August 2023.
+
+2024-07-02: Internal strategy memo (Sarah Whitfield to file): Staffing
+shortfall emails discovered in GreenStone production are highly favorable
+to Client. Recommend prioritizing depositions of Daniel Cross and Alan
+Whitcomb to lock in admissions regarding known deficiencies.
+
+2024-08-06: Deposition of Daniel Cross (former GreenStone Operations
+Manager) conducted at Apex Legal Solutions offices, 200 South Wacker Drive,
+Suite 3100, Chicago, IL 60606. Cross testified that GreenStone's Joliet
+facility operated with 40% fewer warehouse staff than budgeted between
+August and December 2023, and that he raised concerns to management on
+three separate occasions without remedial action.
+
+2024-08-20: Deposition of Susan Bailey (NovaTech Supply Chain Director)
+conducted by opposing counsel. Bailey testified regarding NovaTech's
+purchase order practices and disputed GreenStone's contributory fault theory.
+
+2024-09-11: Status conference before Hon. Margaret Ellison. Court set
+expert disclosure deadlines as noted above and encouraged the parties to
+engage in mediation before the dispositive motion deadline.
+
+2024-10-02: Internal comment (Marcus Chen to Sarah Whitfield): Recommend
+retaining a damages expert to quantify lost sales attributable specifically
+to late deliveries versus general market softness in Q4 2023. Client
+concurred; retained Dr. Helena Marsh, forensic accountant, on October 9, 2024.
+
+2024-10-15: Fact discovery closed.
+
+2024-11-01: Plaintiff's expert report served (Dr. Helena Marsh). Report
+concludes damages of $4,010,000, consisting of $2.6 million in expedited
+freight costs, $980,000 in customer chargebacks, and $430,000 in lost
+future business with a key retail partner.
+
+2024-12-01: Defendant's expert report served, contesting causation and
+proposing a damages figure of $610,000.
+
+2025-01-08: Mediation session conducted with retired Judge Howard Bennett
+serving as mediator. No settlement reached; GreenStone's final offer was
+$1.2 million, which Client rejected as insufficient given expert damages
+findings.
+
+2025-01-15: Cross-motions for partial summary judgment filed. NovaTech
+moved for summary judgment on liability as to Section 9.5 (Warehouse
+Damage Liability). GreenStone moved for summary judgment on the
+declaratory judgment count (Count IV), arguing the indemnification clause
+does not apply to third-party claims.
+
+2025-02-20 (anticipated): Hearing on cross-motions for summary judgment.
+
+-------------------------------------------------------------------------------
+VI. RISK ASSESSMENT
+-------------------------------------------------------------------------------
+Overall Case Risk Rating: MODERATE
+
+Strengths:
+- Internal GreenStone emails documenting known staffing shortfalls provide
+  strong evidence of breach and negate the force majeure defense for the
+  bulk of the claim period (August-December 2023, prior to the December
+  winter storms).
+- Deposition testimony from Daniel Cross corroborates staffing shortfall
+  allegations.
+
+Weaknesses:
+- Defendant's force majeure defense may reduce damages attributable to the
+  December 2023 winter storm period (approximately $380,000 of the claimed
+  damages).
+- Damages experts remain significantly apart ($4,010,000 vs. $610,000);
+  this gap increases trial unpredictability.
+
+Recommendation: Continue toward summary judgment on the Section 9.5 claim
+while remaining open to a second mediation session following the summary
+judgment ruling. Realistic settlement range: $2.1 million to $2.8 million.
+
+-------------------------------------------------------------------------------
+VII. BILLING SUMMARY (SELECTED)
+-------------------------------------------------------------------------------
+Invoice INV-APX-20456 (March 2024): $38,420.00 - Complaint drafting, filing,
+service coordination.
+Invoice INV-APX-20512 (April 2024): $22,150.00 - Rule 26(f) conference,
+initial discovery planning.
+Invoice INV-APX-21190 (August 2024): $61,875.00 - Deposition preparation
+and attendance (Cross, Bailey depositions).
+Invoice INV-APX-21804 (November 2024): $44,300.00 - Expert report review
+and rebuttal coordination.
+
+Total Fees Billed to Date: $166,745.00
+Estimated Fees Through Trial: $410,000.00 - $475,000.00
+
+-------------------------------------------------------------------------------
+VIII. INTERNAL COMMENTS
+-------------------------------------------------------------------------------
+[Sarah Whitfield, 2024-07-02]: This case has strong liability facts on our
+side for the pre-storm period. We should consider bifurcating damages
+discussion in mediation to isolate the undisputed staffing-shortfall period
+from the weather-related period.
+
+[Marcus Chen, 2024-10-02]: Note for file - Client's General Counsel has
+also engaged Apex Legal Solutions on an unrelated corporate matter
+involving Client's potential acquisition of BluePeak Software (internally
+referred to by Client as "Project Phoenix"). Ensure no conflicts between
+litigation team staffing and corporate team staffing on that matter. See
+Due Diligence Report, Matter Number APX-2024-0201, for cross-reference.
+
+[Denise Okafor, 2025-01-09]: Mediation exhibit binder finalized and stored
+in document management system under Matter Number APX-2024-0113, folder
+"Mediation - January 2025."
+
+-------------------------------------------------------------------------------
+IX. NEXT STEPS / ACTION ITEMS
+-------------------------------------------------------------------------------
+1. [Marcus Chen] Prepare reply brief in support of summary judgment motion
+   - Due January 29, 2025.
+2. [Sarah Whitfield] Confer with Client re: acceptable settlement range
+   ahead of potential second mediation - Due February 5, 2025.
+3. [Denise Okafor] Update trial exhibit list and Bates number index - Due
+   March 1, 2025.
+4. [Sarah Whitfield] Coordinate with Dr. Helena Marsh re: potential
+   supplemental damages report addressing Q1 2024 chargebacks - Due
+   February 14, 2025.
+
+END OF DOCUMENT - DOC-LC2045-001

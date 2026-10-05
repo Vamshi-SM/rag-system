@@ -1,0 +1,25 @@
+{"id": 1, "question": "What is the Restricted Period in the employment agreement for Natalie Whitcombe?", "expected_filenames": ["employment_agreement.md"], "category": "real_doc"}
+{"id": 2, "question": "Who does the Director of Risk Analytics report to in the employment agreement?", "expected_filenames": ["employment_agreement.md"], "category": "real_doc"}
+{"id": 3, "question": "How many remote working days per week does the employment agreement permit?", "expected_filenames": ["employment_agreement.md"], "category": "real_doc"}
+{"id": 4, "question": "How long does it take to process a refund after it is approved?", "expected_filenames": ["sample_refund_policy.txt"], "category": "real_doc"}
+{"id": 5, "question": "What is the refund window for an unused subscription?", "expected_filenames": ["sample_refund_policy.txt"], "category": "real_doc"}
+{"id": 6, "question": "How many rentable square feet are in the leased premises under the commercial lease agreement?", "expected_filenames": ["commercial_lease.md"], "category": "real_doc"}
+{"id": 7, "question": "Who is the landlord in the commercial lease agreement?", "expected_filenames": ["commercial_lease.md"], "category": "real_doc"}
+{"id": 8, "question": "What is the permitted use of the premises under the commercial lease?", "expected_filenames": ["commercial_lease.md"], "category": "real_doc"}
+{"id": 9, "question": "What is the purpose of the mutual non-disclosure agreement between Horizon and Sterling?", "expected_filenames": ["mutual_nda.md"], "category": "real_doc"}
+{"id": 10, "question": "Which two parties signed the mutual non-disclosure agreement?", "expected_filenames": ["mutual_nda.md"], "category": "real_doc"}
+{"id": 11, "question": "Who chaired the NovaTech Systems board meeting held on October 3, 2024?", "expected_filenames": ["board_meeting_minutes.txt"], "category": "real_doc"}
+{"id": 12, "question": "Which outside counsel firm attended the NovaTech Systems board meeting?", "expected_filenames": ["board_meeting_minutes.txt"], "category": "real_doc"}
+{"id": 13, "question": "What is the USPTO serial number of the Atlas BioTech patent application?", "expected_filenames": ["patent_application_review.txt"], "category": "real_doc"}
+{"id": 14, "question": "What invention does the Atlas BioTech patent application seek to protect?", "expected_filenames": ["patent_application_review.txt"], "category": "real_doc"}
+{"id": 15, "question": "What was the base purchase price in the NovaTech and BluePeak Software transaction?", "expected_filenames": ["merger_acquisition_review.txt"], "category": "real_doc"}
+{"id": 16, "question": "What escrow holdback was set in the NovaTech BluePeak stock purchase, and for how long?", "expected_filenames": ["merger_acquisition_review.txt"], "category": "real_doc"}
+{"id": 17, "question": "How many individuals' personal data may have been exposed in the NovaTech Systems breach?", "expected_filenames": ["cybersecurity_incident_report.txt"], "category": "real_doc"}
+{"id": 18, "question": "What was the intrusion vector in the NovaTech Systems cloud storage breach?", "expected_filenames": ["cybersecurity_incident_report.txt"], "category": "real_doc"}
+{"id": 19, "question": "What percentage of SARs were filed within the required 30-day window at Orion Financial?", "expected_filenames": ["anti_money_laundering_audit.txt"], "category": "real_doc"}
+{"id": 20, "question": "What is the name and version of Orion Financial's automated transaction monitoring system?", "expected_filenames": ["anti_money_laundering_audit.txt"], "category": "real_doc"}
+{"id": 21, "question": "Which NPDES permit governs wastewater discharge at Vertex Manufacturing's Riverbend plant?", "expected_filenames": ["environmental_compliance_report.txt"], "category": "real_doc"}
+{"id": 22, "question": "What percentage of outstanding shares were represented at the Horizon Capital annual shareholders meeting?", "expected_filenames": ["shareholder_meeting_minutes.txt"], "category": "real_doc"}
+{"id": 23, "question": "In what year was State of Iowa v. Dwight Herkleman decided, and what is its citation?", "expected_filenames": ["bulk_part_0180.txt"], "category": "bulk_opinion"}
+{"id": 24, "question": "Find the case reported at 330 Mass. 187 involving Albert I. Cohen as trustee in bankruptcy. What is its Northeast Reporter citation?", "expected_filenames": ["bulk_part_0140.txt"], "category": "bulk_opinion"}
+{"id": 25, "question": "What did the dissenting judge argue about the perpetual lease under the Adams County zoning ordinance on intensive livestock operations?", "expected_filenames": ["bulk_part_0100.txt"], "category": "bulk_opinion"}

@@ -1,0 +1,252 @@
+APEX LEGAL SOLUTIONS
+CLIENT CONSULTATION NOTES
+CONFIDENTIAL - ATTORNEY-CLIENT PRIVILEGED COMMUNICATION
+
+DOCUMENT NUMBER: DOC-CCN-2024-077
+PREPARED BY: Rachel Kim, Esq. (Corporate & Regulatory Practice Group)
+DEPARTMENT: Corporate Advisory Services
+
+===============================================================================
+CONSULTATION LOG - MULTIPLE CLIENTS
+===============================================================================
+
+-------------------------------------------------------------------------------
+ENTRY 1: HORIZON CAPITAL - RESTRUCTURING ADVISORY (PROJECT ATLAS)
+-------------------------------------------------------------------------------
+Date: 2024-02-06
+Client: Horizon Capital
+Client ID: CLT-4410
+Matter Number: APX-2024-0155
+Client Contact: Jennifer Osei, Chief Executive Officer
+Client Address: 900 Marina Boulevard, Floor 22, San Francisco, CA 94111
+Client Email: j.osei@horizoncapital.com
+Client Phone: (415) 555-9021
+Attorney Present: Rachel Kim, Esq.; James Thornton, Esq. (Partner)
+
+Summary: Jennifer Osei requested advisory services regarding a planned
+internal restructuring of Horizon Capital's private lending division,
+internally designated "Project Atlas." The restructuring involves
+spinning off the mid-market lending unit into a separate subsidiary,
+Horizon Capital Lending LLC, to isolate regulatory capital requirements.
+
+Discussion Points:
+- Client seeks to complete the restructuring before the start of the next
+  fiscal year (target date: December 1, 2024).
+- Client raised concerns about triggering change-of-control provisions in
+  existing loan agreements, including a $75,000,000 credit facility with
+  Orion Financial (Contract No. OF-CF-2021-0044).
+- Advised client that Section 8.4 of the Orion Financial credit agreement
+  may require lender consent for the proposed subsidiary transfer.
+- Client requested a full contract review of the Orion Financial facility;
+  see Contract Review Summary, Matter Number APX-2024-0210, for detailed
+  findings.
+
+Action Items:
+1. [Rachel Kim] Draft memo analyzing change-of-control provisions across
+   Horizon Capital's top 10 credit facilities - Due 2024-02-20.
+2. [James Thornton] Schedule call with Orion Financial's General Counsel to
+   discuss consent requirements - Due 2024-02-28.
+3. [Client - Jennifer Osei] Provide organizational chart for proposed
+   Horizon Capital Lending LLC subsidiary - Due 2024-02-13.
+
+Follow-up scheduled: 2024-03-01.
+
+-------------------------------------------------------------------------------
+ENTRY 2: HORIZON CAPITAL - FOLLOW-UP CONSULTATION
+-------------------------------------------------------------------------------
+Date: 2024-03-01
+Client: Horizon Capital (Client ID: CLT-4410)
+Matter Number: APX-2024-0155
+Attorney Present: Rachel Kim, Esq.
+
+Summary: Jennifer Osei confirmed that Orion Financial's General Counsel,
+Thomas Reilly, indicated preliminary willingness to consent to the
+subsidiary transfer, subject to an amended guaranty from Horizon Capital's
+parent entity. Discussed draft amendment terms.
+
+Client also mentioned an unrelated but time-sensitive issue: Horizon
+Capital received a regulatory inquiry letter from the state Department of
+Financial Institutions regarding lending disclosure practices, reference
+number DFI-INQ-2024-3390. Advised client that this should be treated as a
+separate matter and recommended immediate involvement of Apex Legal
+Solutions' compliance team (see Compliance Audit Report cross-reference
+for related industry compliance standards).
+
+Action Items:
+1. [Rachel Kim] Draft response outline to DFI inquiry letter DFI-INQ-2024-3390
+   - Due 2024-03-08.
+2. [Client] Forward complete DFI inquiry letter and any prior correspondence
+   - Due 2024-03-04.
+
+-------------------------------------------------------------------------------
+ENTRY 3: REDWOOD HEALTHCARE - DATA PRIVACY CONSULTATION
+-------------------------------------------------------------------------------
+Date: 2024-04-11
+Client: Redwood Healthcare
+Client ID: CLT-5502
+Matter Number: APX-2024-0188
+Client Contact: Dr. Amanda Foster, Chief Compliance Officer
+Client Address: 2200 Cascade Avenue, Portland, OR 97201
+Client Email: a.foster@redwoodhealthcare.org
+Client Phone: (503) 555-6674
+Attorney Present: Rachel Kim, Esq.; Elena Rodriguez, Esq. (Data Privacy
+Practice Group)
+
+Summary: Dr. Foster requested guidance on Redwood Healthcare's obligations
+under both HIPAA and, due to a newly launched telehealth service targeting
+patients in the European Union, the General Data Protection Regulation
+(GDPR). Client operates 14 clinical facilities across Oregon and
+Washington and is preparing to launch "Project Meridian," a telehealth
+platform expansion.
+
+Discussion Points:
+- Reviewed data flow diagrams for the telehealth platform; identified that
+  patient data from EU-based users would be processed on servers located
+  in the United States, triggering GDPR Article 44 (cross-border transfer)
+  obligations.
+- Client confirmed no existing Standard Contractual Clauses (SCCs) are in
+  place with its cloud hosting vendor, BluePeak Software.
+- Advised client that a Data Protection Impact Assessment (DPIA) should be
+  completed prior to launch, targeted for June 1, 2024.
+- Discussed potential HIPAA Business Associate Agreement (BAA) gaps with
+  three subcontractors identified during the meeting: BluePeak Software,
+  MedConnect Data Systems, and CarePath Analytics.
+- See Legal Research Notes (Matter Number APX-2024-0188) for detailed GDPR
+  and HIPAA statutory analysis prepared following this consultation.
+
+Action Items:
+1. [Elena Rodriguez] Draft DPIA template and coordinate with client's IT
+   department - Due 2024-04-25.
+2. [Rachel Kim] Request copies of existing BAAs with BluePeak Software,
+   MedConnect Data Systems, and CarePath Analytics - Due 2024-04-18.
+3. [Client - Dr. Foster] Provide data flow diagrams in editable format -
+   Due 2024-04-15.
+
+Risk Note: Client's telehealth launch date of July 1, 2024 is at risk if
+BAA gaps are not resolved by June 15, 2024. Recommend client consider a
+phased launch limited to non-EU patients if timeline slips. See
+Regulatory Compliance Checklist, Matter Number APX-2024-0188, item
+RCC-014, for detailed tracking.
+
+-------------------------------------------------------------------------------
+ENTRY 4: VERTEX MANUFACTURING - ENVIRONMENTAL COMPLIANCE CONSULTATION
+-------------------------------------------------------------------------------
+Date: 2024-05-20
+Client: Vertex Manufacturing
+Client ID: CLT-6613
+Matter Number: APX-2024-0201-EC
+Client Contact: Patricia Nguyen, General Counsel
+Client Address: 780 Foundry Lane, Youngstown, OH 44502
+Client Email: p.nguyen@vertexmfg.com
+Client Phone: (330) 555-8842
+Attorney Present: David Park, Esq. (Environmental & Regulatory Practice)
+
+Summary: Patricia Nguyen requested a review of Vertex Manufacturing's
+compliance status under the Clean Air Act permitting requirements at its
+Youngstown, Ohio facility following a recent state inspection that
+identified excess particulate emissions on two occasions in March 2024.
+
+Discussion Points:
+- Client received a Notice of Violation (NOV No. OH-EPA-2024-1187) from
+  the Ohio Environmental Protection Agency on April 30, 2024.
+- Advised client that a response to the NOV is due within 30 days
+  (deadline: May 30, 2024).
+- Discussed potential penalty exposure, estimated between $85,000 and
+  $220,000 depending on whether the violations are characterized as a
+  single continuing event or two separate events.
+- Client confirmed corrective measures (new particulate filtration system)
+  were installed and became operational on May 10, 2024.
+
+Action Items:
+1. [David Park] Draft NOV response letter emphasizing prompt corrective
+   action - Due 2024-05-27.
+2. [Client - Patricia Nguyen] Provide filtration system installation
+   documentation and emissions testing data - Due 2024-05-23.
+3. [David Park] Coordinate with environmental engineering consultant,
+   Sterling Consulting, to prepare a supporting technical report - Due
+   2024-05-24.
+
+Note: Sterling Consulting has a separate, unrelated engagement with
+Summit Energy Group (see Compliance Audit Report, Matter Number
+APX-2024-0233) providing cybersecurity advisory services; no conflict
+identified as engagements involve different Sterling Consulting divisions
+and different Vertex/Summit personnel.
+
+-------------------------------------------------------------------------------
+ENTRY 5: NOVATECH SYSTEMS - CORPORATE ADVISORY (PROJECT PHOENIX INTAKE)
+-------------------------------------------------------------------------------
+Date: 2024-06-03
+Client: NovaTech Systems, Inc.
+Client ID: CLT-8821
+Matter Number: APX-2024-0201
+Client Contact: Michael Anders, Chief Financial Officer
+Attorney Present: James Thornton, Esq.; Rachel Kim, Esq.
+
+Summary: Michael Anders formally engaged Apex Legal Solutions to advise on
+NovaTech Systems' proposed acquisition of BluePeak Software, internally
+designated "Project Phoenix." This is a separate matter from the ongoing
+litigation against GreenStone Logistics (Case ID LC-2045, Matter Number
+APX-2024-0113); confirmed no staffing overlap between litigation and
+corporate teams per internal conflicts check dated 2024-06-01.
+
+Discussion Points:
+- Client outlined preliminary acquisition structure: stock purchase of
+  100% of BluePeak Software's outstanding shares for an estimated
+  enterprise value of $128,000,000, subject to adjustment.
+- Client requested Apex Legal Solutions lead due diligence and draft
+  definitive acquisition agreements.
+- Discussed timeline: target signing by August 15, 2024, target closing
+  by October 31, 2024.
+- Identified key third-party consents likely required, including consent
+  from BluePeak Software's primary cloud infrastructure vendor and
+  landlord consents for two leased facilities.
+
+Action Items:
+1. [Rachel Kim] Assemble due diligence team and issue initial document
+   request list to BluePeak Software - Due 2024-06-10.
+2. [James Thornton] Begin drafting term sheet - Due 2024-06-14.
+
+See Due Diligence Report (Matter Number APX-2024-0201) and Merger &
+Acquisition Review (Matter Number APX-2024-0201) for subsequent findings.
+
+-------------------------------------------------------------------------------
+ENTRY 6: SUMMIT ENERGY GROUP - GENERAL COMPLIANCE CHECK-IN
+-------------------------------------------------------------------------------
+Date: 2024-07-15
+Client: Summit Energy Group
+Client ID: CLT-7729
+Matter Number: APX-2024-0233
+Client Contact: Kevin Walsh, Vice President, Legal & Compliance
+Client Address: 300 Turbine Way, Denver, CO 80202
+Client Email: k.walsh@summitenergygroup.com
+Client Phone: (720) 555-4471
+Attorney Present: Rachel Kim, Esq.
+
+Summary: Routine quarterly check-in call. Kevin Walsh reported that
+Summit Energy Group engaged Sterling Consulting to conduct an internal
+cybersecurity and compliance audit ahead of an anticipated ISO 27001
+recertification review scheduled for Q4 2024. Client requested Apex Legal
+Solutions review the resulting audit report for legal risk implications
+once complete.
+
+Action Items:
+1. [Client - Kevin Walsh] Forward Sterling Consulting's compliance audit
+   report upon completion - Due 2024-09-30.
+2. [Rachel Kim] Calendar review of audit findings for Q4 2024.
+
+See Compliance Audit Report, Matter Number APX-2024-0233, for the
+completed findings referenced in this entry.
+
+-------------------------------------------------------------------------------
+GENERAL NOTES
+-------------------------------------------------------------------------------
+- All consultation notes in this log are subject to attorney-client
+  privilege and should not be disclosed to third parties without written
+  client consent.
+- Cross-reference index: Matter Numbers APX-2024-0155 (Horizon Capital),
+  APX-2024-0188 (Redwood Healthcare), APX-2024-0201 (NovaTech Systems /
+  BluePeak Software), APX-2024-0201-EC (Vertex Manufacturing), and
+  APX-2024-0233 (Summit Energy Group) are each separately billed and
+  tracked in the Apex Legal Solutions document management system.
+
+END OF DOCUMENT - DOC-CCN-2024-077

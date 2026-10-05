@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import settings
-from src.embeddings.google_embedding import GoogleEmbedding
+from src.embeddings.factory import build_embedder
 from src.ingestion.ingestion_service import IngestionService
 from src.utils.logger import get_logger
 from src.vectordb.vector_store import VectorStore
@@ -91,12 +91,7 @@ def main() -> None:
     pipeline_start = time.time()
 
     vector_store = VectorStore(database_path=settings.database_path, default_top_k=settings.top_k)
-    embedder = GoogleEmbedding(
-    project_id=settings.gcp_project_id,
-    location=settings.gcp_location,
-    model=settings.embedding_model,
-    batch_size=settings.embedding_batch_size,
-)
+    embedder = build_embedder(settings)
 
     try:
         if args.reset:

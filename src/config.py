@@ -95,6 +95,13 @@ class Settings:
     ollama_embedding_model: str = field(
         default_factory=lambda: os.getenv("OLLAMA_EMBEDDING_MODEL", "qwen3-embedding:0.6b")
     )
+    #: Model used by the local fastembed backend (``EMBEDDING_BACKEND=local``).
+    local_embedding_model: str = field(
+        default_factory=lambda: os.getenv(
+            "LOCAL_EMBEDDING_MODEL",
+            "BAAI/bge-small-en-v1.5",
+        )
+    )
     embedding_model: str = field(
     default_factory=lambda: os.getenv(
         "EMBEDDING_MODEL",
@@ -102,6 +109,20 @@ class Settings:
     )
 )
     embedding_batch_size: int = field(default_factory=lambda: _get_int("EMBEDDING_BATCH_SIZE", 32))
+    #: Max characters allowed in a single embedding API request payload.
+    #: 2 KB chunks need >= 128000 before batch_size=64 is reachable.
+    embedding_max_chars: int = field(
+        default_factory=lambda: _get_int("EMBEDDING_MAX_CHARS", 20000)
+    )
+    #: Per-request token budget for the Google embedding API.
+    #: text-embedding-004 rejects a request whose TOTAL input exceeds
+    #: 20,000 tokens, so batches are grouped by token count, not item
+    #: count: 700-token chunks cap the request at ~27 items regardless
+    #: of EMBEDDING_BATCH_SIZE. 19000 leaves margin for tokenizer drift
+    #: between tiktoken (local estimate) and Google's tokenizer.
+    embedding_token_budget: int = field(
+        default_factory=lambda: _get_int("EMBEDDING_TOKEN_BUDGET", 19000)
+    )
     embedding_timeout: float = field(default_factory=lambda: _get_float("EMBEDDING_TIMEOUT", 30.0))
     embedding_max_retries: int = field(default_factory=lambda: _get_int("EMBEDDING_MAX_RETRIES", 3))
     #: Number of embedding batches sent to the embedding API concurrently
@@ -124,6 +145,30 @@ class Settings:
     retrieval_candidate_multiplier: int = field(
         default_factory=lambda: _get_int("RETRIEVAL_CANDIDATE_MULTIPLIER", 4)
     )
+    #: Local cross-encoder reranker (fastembed TextCrossEncoder, ONNX on CPU).
+    #: Off by default; when enabled, fused retrieval candidates are rescored
+    #: by (query, chunk) relevance before the final top-k cut.
+    reranker_enabled: bool = field(
+        default_factory=lambda: os.getenv("RERANKER_ENABLED", "false").lower() in ("1", "true", "yes")
+    )
+    reranker_model: str = field(
+        default_factory=lambda: os.getenv("RERANKER_MODEL", "BAAI/bge-reranker-base")
+    )
+    #: How many fused candidates the reranker rescores (keep small - the
+    #: cross-encoder scores every (query, chunk) pair on CPU).
+    reranker_top_n: int = field(default_factory=lambda: _get_int("RERANKER_TOP_N", 20))
+
+    # --- Prompt assembly (token budget) ---
+    #: Per-chunk character cap when building the LLM context. Chunks are
+    #: ~700 tokens (~2.8k chars); trimming tails cuts Gemini prefill time.
+    prompt_max_chunk_chars: int = field(
+        default_factory=lambda: _get_int("PROMPT_MAX_CHUNK_CHARS", 1800)
+    )
+    #: Total context character cap across all included chunks
+    #: (~9000 chars ≈ 2.2k tokens).
+    prompt_max_context_chars: int = field(
+        default_factory=lambda: _get_int("PROMPT_MAX_CONTEXT_CHARS", 9000)
+    )
     # --- Google Cloud / Gemini ---
     gcp_project_id: str = field(
         default_factory=lambda: os.getenv("GCP_PROJECT_ID", "")
@@ -135,6 +180,22 @@ class Settings:
 
     gemini_model: str = field(
         default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+)
+
+    # --- Google Vertex AI RAG Engine (benchmark) ---
+    #: Full resource name of the RAG corpus created by
+    #: scripts/setup_rag_engine.py, e.g.
+    #: "projects/PROJECT/locations/LOCATION/ragCorpora/ID".
+    rag_corpus_name: str = field(
+        default_factory=lambda: os.getenv("RAG_CORPUS_NAME", "")
+)
+    #: Display name used when creating the corpus.
+    rag_corpus_display_name: str = field(
+        default_factory=lambda: os.getenv("RAG_CORPUS_DISPLAY_NAME", "rag-benchmark-corpus")
+)
+    #: GCS bucket that stages corpus files before import (created if missing).
+    rag_gcs_bucket: str = field(
+        default_factory=lambda: os.getenv("RAG_GCS_BUCKET", "")
 )
     # --- LLM (SharedLLM chat API) ---
     chat_model: str = field(default_factory=lambda: os.getenv("CHAT_MODEL", "ollama/kimi-k2.7-code"))

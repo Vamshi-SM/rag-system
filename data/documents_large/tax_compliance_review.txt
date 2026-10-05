@@ -1,0 +1,115 @@
+
+
+
+APEX LEGAL SOLUTIONS - TAX AND CORPORATE PRACTICE GROUP
+TAX COMPLIANCE REVIEW MEMORANDUM
+CONFIDENTIAL - ATTORNEY-CLIENT PRIVILEGED
+
+Matter Number: MAT-2026-0512-T (related to MAT-2026-0512 employment matter
+- see employment_dispute_casefile.txt for background on client structure)
+Case ID: TAX-COMP-3765
+Client ID: CLI-10083 (Summit Energy Group)
+Review Period: Tax Year 2025
+Report Date: March 30, 2026
+
+Reviewing Attorney: David Okafor, Esq. (d.okafor@apexlegalsolutions.com)
+Supervising Partner: James Kowalski, Esq.
+Outside Tax Advisor: Fenwick Tax Advisory Group (Lead: Cynthia Marlowe, CPA)
+
+Client Contact: Thomas Reilly, Chief Compliance Officer, Summit Energy Group
+Client Address: 5100 Refinery Row, Houston, TX 77002
+Client Phone: (713) 555-0812
+Client Email: t.reilly@summitenergygroup.com
+
+BACKGROUND
+Summit Energy Group entered into a joint venture agreement with Meridian
+Energy on June 15, 2025, to develop a renewable natural gas facility in
+Beaumont, Texas (Contract Number CN-77410, "Beaumont RNG Project"). This
+review evaluates the tax treatment of the joint venture structure and
+Summit Energy Group's broader federal and state tax compliance posture
+for tax year 2025.
+
+SCOPE OF REVIEW
+1. Federal income tax return preparation and filing accuracy (Form 1120).
+2. Section 45Z clean fuel production tax credit eligibility analysis for
+   the Beaumont RNG Project.
+3. Texas franchise tax compliance.
+4. Transfer pricing documentation for intercompany transactions with
+   Summit Energy Group's Canadian subsidiary, Summit Energy Canada ULC.
+
+FINDINGS
+1. Federal Return: Form 1120 for tax year 2025 was filed timely on
+   March 15, 2026, reporting total taxable income of $128,400,000 and
+   federal tax liability of $26,964,000 (21% statutory rate).
+2. Clean Fuel Production Credit: The Beaumont RNG Project qualifies for
+   the Section 45Z credit under the Inflation Reduction Act; estimated
+   credit value for 2025 is $4,200,000, contingent on final EPA
+   lifecycle emissions certification (pending as of report date).
+3. Texas Franchise Tax: Compliance confirmed; no deficiencies identified.
+4. Transfer Pricing: Fenwick Tax Advisory Group identified a documentation
+   gap in the intercompany services agreement between Summit Energy Group
+   and Summit Energy Canada ULC; contemporaneous transfer pricing study
+   was not completed for the 2025 tax year as required under 26 U.S.C.
+   § 482 and corresponding Treasury Regulations.
+
+RELEVANT STATUTES AND LEGAL REFERENCES
+- Internal Revenue Code § 45Z (Clean Fuel Production Credit)
+- Internal Revenue Code § 482 (Allocation of Income and Deductions)
+- Treasury Regulation § 1.482-1 et seq.
+- Texas Tax Code Chapter 171 (Franchise Tax)
+- Inflation Reduction Act of 2022, Pub. L. No. 117-169
+
+INVESTIGATION NOTES
+- Cynthia Marlowe's memorandum (Ref. FTAG-2026-0155, dated March 18, 2026)
+  flags the missing transfer pricing study as a moderate compliance risk,
+  particularly given increased IRS scrutiny of cross-border energy sector
+  transactions in 2025-2026.
+- Thomas Reilly confirmed that the joint venture agreement with Meridian
+  Energy (CN-77410) includes a cost-sharing arrangement for the RNG
+  facility that has not yet been independently benchmarked for arm's-
+  length pricing compliance.
+- EPA lifecycle emissions certification for the Beaumont RNG Project is
+  expected by June 2026; delay in certification could affect the timing
+  of credit recognition on the 2025 amended return, if needed.
+- No prior IRS audit history for Summit Energy Group in the past five
+  years; however, the company's growing renewable energy credit claims
+  increase future audit likelihood.
+
+RISK ASSESSMENT
+Risk Level: MODERATE
+Likelihood of IRS Audit within 24 months: Moderate (35%), elevated due to
+size of clean energy credit claims
+Estimated Penalty Exposure for Transfer Pricing Gap: $50,000 - $180,000
+under 26 U.S.C. § 6662(e) if documentation not remediated
+Estimated Value of Section 45Z Credit at Risk (if certification delayed
+or denied): $4,200,000
+
+RECOMMENDATIONS
+1. Complete contemporaneous transfer pricing study for Summit Energy
+   Canada ULC intercompany agreement by June 30, 2026.
+2. Monitor EPA certification timeline for the Beaumont RNG Project and
+   prepare contingency plan for amended return filing if necessary.
+3. Engage Fenwick Tax Advisory Group to conduct a broader nexus study
+   given Summit Energy Group's expanding multi-state operations.
+4. Coordinate with corporate team on joint venture cost-sharing
+   arrangement documentation with Meridian Energy.
+
+ACTION ITEMS
+1. Cynthia Marlowe to complete transfer pricing study by June 30, 2026.
+2. Thomas Reilly to provide EPA certification status updates monthly
+   beginning April 2026.
+3. David Okafor to draft contingency memo for amended return filing by
+   May 15, 2026.
+4. Schedule joint venture cost-sharing review meeting with Meridian
+   Energy counsel by April 30, 2026.
+
+UPCOMING DEADLINES
+- Transfer Pricing Study Completion: June 30, 2026
+- EPA Certification (anticipated): June 2026
+- Q2 Estimated Tax Payment Due: June 15, 2026
+- Amended Return Deadline (if needed): September 15, 2026
+
+NEXT REVIEW DATE: July 1, 2026
+STATUS: ACTIVE - REMEDIATION PENDING
+
+END OF DOCUMENT

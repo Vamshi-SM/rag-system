@@ -1,0 +1,119 @@
+APEX LEGAL SOLUTIONS - INTELLECTUAL PROPERTY PRACTICE GROUP
+PATENT APPLICATION REVIEW MEMORANDUM
+CONFIDENTIAL - ATTORNEY WORK PRODUCT
+
+Matter Number: MAT-2026-0429
+Case ID: PAT-REV-1187
+Client ID: CLI-10061 (Atlas BioTech)
+Applicant: Atlas BioTech Corporation
+Application Title: "Method and System for Continuous Glucose Biomarker
+Detection Using Microfluidic Sensor Arrays"
+Serial Number: 18/220,884
+Filing Date: January 22, 2026
+USPTO Art Unit: 1798
+Examiner Assigned: TBD (pending examiner assignment)
+
+Reviewing Attorney: Elena Rodriguez, Esq. (e.rodriguez@apexlegalsolutions.com)
+Supervising Partner: Sarah Whitfield, Esq.
+Patent Agent: Dr. Howard Kessler, Registration No. 74,210
+
+Client Contact: Dr. Fiona Marsh, VP of Research & Development, Atlas BioTech
+Client Address: 1120 Discovery Drive, Cambridge, MA 02142
+Client Phone: (617) 555-0287
+Client Email: f.marsh@atlasbiotech.com
+
+APPLICATION SUMMARY
+Atlas BioTech seeks patent protection for a novel microfluidic sensor
+array capable of continuous, non-invasive glucose biomarker detection
+through interstitial fluid sampling. The invention builds on prior
+provisional application No. 63/098,442, filed June 4, 2025, and includes
+three independent claims and eighteen dependent claims.
+
+CLAIMS OVERVIEW
+Claim 1 (independent): A microfluidic sensor array comprising a
+biocompatible membrane layer, an electrochemical detection unit, and a
+wireless transmission module configured to relay glucose concentration
+data at intervals of no greater than five minutes.
+
+Claim 8 (independent): A method for calibrating the sensor array using a
+machine-learning correction model trained on interstitial fluid variance
+data.
+
+Claim 15 (independent): A system integrating the sensor array with a
+companion mobile application for real-time alerting of hypoglycemic and
+hyperglycemic events.
+
+PRIOR ART SEARCH FINDINGS
+Search conducted by Elena Rodriguez and outside search firm Meridian
+Patent Search Group (Invoice No. MPS-30871, dated February 10, 2026).
+Relevant prior art identified:
+1. U.S. Patent No. 10,441,209 (Zenith Pharmaceuticals) - covers a related
+   but distinct transdermal sensor technology; potential Section 103
+   obviousness concern for dependent claims 4-6.
+2. U.S. Patent Application Pub. No. 2024/0187765 (unrelated third party)
+   - discloses similar wireless transmission intervals but different
+   membrane composition.
+3. No blocking prior art identified for the machine-learning calibration
+   claims (Claims 8-14).
+
+FREEDOM-TO-OPERATE ANALYSIS
+Elena Rodriguez's preliminary FTO analysis (memo dated March 1, 2026)
+concludes moderate risk of overlap with Zenith Pharmaceuticals' patent
+portfolio, particularly U.S. Patent No. 10,441,209 and related continuation
+U.S. Patent No. 11,038,552. Recommend narrowing Claims 4-6 to specify the
+particular microfluidic channel geometry disclosed in the specification
+to avoid potential infringement exposure.
+
+RELEVANT STATUTES AND LEGAL REFERENCES
+- 35 U.S.C. § 101 (Patentable Subject Matter)
+- 35 U.S.C. § 102 (Novelty)
+- 35 U.S.C. § 103 (Non-Obviousness)
+- 37 C.F.R. § 1.75 (Claims)
+- Alice Corp. v. CLS Bank International, 573 U.S. 208 (2014)
+
+INVESTIGATION NOTES
+- Dr. Fiona Marsh confirmed the invention was independently developed and
+  not derived from any prior Atlas BioTech collaboration with Zenith
+  Pharmaceuticals under the 2023 co-research agreement (Contract Number
+  CN-63311), which expired December 31, 2024.
+- Inventor declarations signed by Dr. Fiona Marsh and Dr. Samuel Reyes
+  on January 15, 2026.
+- No public disclosure or sale of the invention occurred prior to filing,
+  per client certification, preserving novelty under 35 U.S.C. § 102.
+
+RISK ASSESSMENT
+Risk Level: MODERATE
+Likelihood of Allowance (Claims 1-7): High (80%)
+Likelihood of Allowance (Claims 4-6 as currently drafted): Moderate (50%)
+  due to potential Section 103 rejection citing Zenith Pharmaceuticals prior art
+Estimated Prosecution Cost through Final Action: $45,000 - $65,000
+Estimated Timeline to First Office Action: 14-18 months
+
+RECOMMENDATIONS
+1. Amend Claims 4-6 to narrow scope and distinguish from Zenith
+   Pharmaceuticals' U.S. Patent No. 10,441,209.
+2. File Information Disclosure Statement citing all identified prior art
+   by April 30, 2026.
+3. Consider filing a continuation-in-part application to capture ongoing
+   R&D improvements to the calibration algorithm.
+4. Monitor Zenith Pharmaceuticals' patent portfolio for newly published
+   applications that could affect claim scope.
+
+ACTION ITEMS
+1. Elena Rodriguez to prepare claim amendments by April 25, 2026.
+2. Dr. Howard Kessler to file Information Disclosure Statement by
+   April 30, 2026.
+3. Schedule inventor interview with Dr. Fiona Marsh and Dr. Samuel Reyes
+   for May 5, 2026.
+4. Coordinate with corporate team regarding potential licensing discussions
+   referencing the expired CN-63311 agreement.
+
+UPCOMING DEADLINES
+- Information Disclosure Statement Deadline: April 30, 2026
+- Estimated First Office Action: March-July 2027
+- Annuity/Maintenance Fee Tracking: N/A (application stage)
+
+NEXT REVIEW DATE: June 1, 2026
+STATUS: ACTIVE - PROSECUTION PENDING
+
+END OF DOCUMENT

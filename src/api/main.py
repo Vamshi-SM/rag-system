@@ -29,9 +29,7 @@ from src.api.exceptions import register_exception_handlers
 from src.api.middleware import RequestLoggingMiddleware
 from src.api.routes import router
 from src.config import settings
-from src.embeddings.google_embedding import GoogleEmbedding
-from src.embeddings.ollama_embedding import OllamaEmbedding
-from src.embeddings.qwen_embedding import QwenEmbedding
+from src.embeddings.factory import build_embedder
 from src.ingestion.ingestion_service import IngestionService
 from src.llm.sllm import SLLMChat
 from src.rag.rag_pipeline import RAGPipeline
@@ -49,29 +47,12 @@ TAGS_METADATA = [
 
 
 def _build_embedder():
-    """Construct the embedding provider selected by ``EMBEDDING_BACKEND``."""
-    if settings.embedding_backend == "ollama":
-        return OllamaEmbedding(
-            base_url=settings.ollama_base_url,
-            model=settings.ollama_embedding_model,
-            batch_size=settings.embedding_batch_size,
-            timeout=settings.embedding_timeout,
-            max_retries=settings.embedding_max_retries,
-        )
-    if settings.embedding_backend == "google":
-        return GoogleEmbedding(
-            project_id=settings.gcp_project_id,
-            location=settings.gcp_location,
-            model=settings.embedding_model,
-        )
-    return QwenEmbedding(
-        api_key=settings.sllm_api_key,
-        base_url=settings.sllm_base_url,
-        model=settings.embedding_model,
-        batch_size=settings.embedding_batch_size,
-        timeout=settings.embedding_timeout,
-        max_retries=settings.embedding_max_retries,
-    )
+    """Construct the embedding provider selected by ``EMBEDDING_BACKEND``.
+
+    Delegates to the shared factory so the API and the ingestion CLI
+    always wire the same backends.
+    """
+    return build_embedder(settings)
 
 
 @asynccontextmanager

@@ -9,7 +9,6 @@ the module never hard-depends on a specific tokenizer being installed).
 
 from __future__ import annotations
 
-import uuid
 from typing import Callable, TypedDict
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -93,11 +92,14 @@ class DocumentChunker:
         )
 
     def _make_chunk(
-        self, document: LoadedDocument, raw_text: str, page: int | None
+        self, document: LoadedDocument, raw_text: str, page: int | None, index: int
     ) -> Chunk:
         metadata = document.get("metadata", {})
         return {
-            "chunk_id": str(uuid.uuid4()),
+            # Deterministic per (document content, position): document ids are
+            # content checksums, so re-running ingestion after a crash upserts
+            # the same rows instead of duplicating chunks with fresh ids.
+            "chunk_id": f"{document['id']}:{index}",
             "document_id": document["id"],
             "text": raw_text,
             "metadata": {
@@ -120,6 +122,7 @@ class DocumentChunker:
         page_texts = metadata.get("page_texts")
 
         chunks: list[Chunk] = []
+        index = 0
 
         if page_texts:
             for page_number, page_text in enumerate(page_texts, start=1):
@@ -127,13 +130,17 @@ class DocumentChunker:
                     continue
                 for raw_chunk in self._splitter.split_text(page_text):
                     if raw_chunk.strip():
-                        chunks.append(self._make_chunk(document, raw_chunk, page_number))
+                        chunks.append(
+                            self._make_chunk(document, raw_chunk, page_number, index)
+                        )
+                        index += 1
         else:
             text = document["text"]
             if text and text.strip():
                 for raw_chunk in self._splitter.split_text(text):
                     if raw_chunk.strip():
-                        chunks.append(self._make_chunk(document, raw_chunk, None))
+                        chunks.append(self._make_chunk(document, raw_chunk, None, index))
+                        index += 1
 
         logger.info(
             "Chunked '%s' into %d chunks (chunk_size=%d, overlap=%d)",

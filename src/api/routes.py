@@ -1,5 +1,5 @@
-"""API routes: POST /ingest, POST /query, POST /query/latency, GET /health,
-GET /stats.
+"""API routes: POST /ingest, POST /query, POST /query/stream,
+POST /query/latency, GET /health, GET /stats.
 
 All business logic is delegated to existing Phase 2-8 modules
 (``IngestionService``, ``RAGPipeline``, ``Retriever``) - these routes are
@@ -9,10 +9,13 @@ response.
 
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
+from typing import Iterator
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from starlette.concurrency import run_in_threadpool
 
 from src.api.dependencies import (
@@ -167,6 +170,65 @@ async def query_documents(
         sources=sources,
         retrieved_chunks=len(response.chunks_used),
         latency=_format_duration(response.elapsed_seconds),
+    )
+
+
+@router.post(
+    "/query/stream",
+    tags=["Query"],
+    summary="Ask a question and stream the answer token-by-token (SSE)",
+    description=(
+        "Same retrieval-augmented flow as /query, but the answer streams "
+        "over Server-Sent Events. The retrieved sources are sent first "
+        "(event: sources), then the answer tokens (event: token), then a "
+        "final event: done. Time-to-first-token is retrieval + one LLM "
+        "token instead of the full answer."
+    ),
+)
+async def query_stream(
+    request: QueryRequest,
+    rag_pipeline: RAGPipeline = Depends(get_rag_pipeline),
+) -> StreamingResponse:
+    """Stream a grounded answer as Server-Sent Events."""
+
+    def _sse() -> Iterator[str]:
+        # Retrieval runs in the stream body: sources are known after the
+        # first retrieval, tokens follow as the LLM yields them.
+        stream, chunks, sources = rag_pipeline.stream_answer(
+            request.question,
+            top_k=request.top_k,
+            similarity_threshold=request.similarity_threshold,
+            filename=request.filename,
+        )
+        first = {
+            "sources": [
+                {
+                    "filename": c["metadata"].get("filename", "unknown"),
+                    "page": c["metadata"].get("page"),
+                    "score": c["score"],
+                }
+                for c in chunks
+            ],
+            "retrieved_chunks": len(chunks),
+        }
+        yield f"event: sources\ndata: {json.dumps(first)}\n\n"
+        try:
+            for token in stream:
+                yield f"event: token\ndata: {json.dumps(token)}\n\n"
+        except Exception as exc:  # noqa: BLE001 - report, never kill the connection silently
+            logger.error("Streaming answer failed: %s", exc)
+            yield (
+                "event: error\ndata: "
+                + json.dumps({"detail": "answer generation failed; try again"})
+                + "\n\n"
+            )
+            return
+        yield "event: done\ndata: {}\n\n"
+
+    return StreamingResponse(
+        _sse(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 

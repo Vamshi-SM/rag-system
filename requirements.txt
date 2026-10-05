@@ -13,6 +13,11 @@ tiktoken>=0.8.0
 # --- Phase 4: Embeddings ---
 requests>=2.32.3
 tqdm>=4.66.5
+fastembed>=0.8.0
+google-genai>=1.0.0
+google-cloud-aiplatform>=1.70.0
+google-cloud-storage>=2.14.0
+datasets>=3.0.0
 
 # --- Phase 5: Vector database ---
 sqlite-vec>=0.1.6

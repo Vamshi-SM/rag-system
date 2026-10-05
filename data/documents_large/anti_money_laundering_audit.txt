@@ -1,0 +1,108 @@
+APEX LEGAL SOLUTIONS - FINANCIAL REGULATORY PRACTICE GROUP
+ANTI-MONEY LAUNDERING (AML) COMPLIANCE AUDIT
+CONFIDENTIAL - REGULATORY PRIVILEGE ASSERTED
+
+Matter Number: MAT-2026-0455
+Case ID: AML-AUD-1902
+Client ID: CLI-10038 (Orion Financial)
+Audit Period Covered: January 1, 2025 - December 31, 2025
+Audit Completion Date: February 26, 2026
+Regulatory Agencies Referenced: Financial Crimes Enforcement Network
+(FinCEN), Office of the Comptroller of the Currency (OCC)
+
+Lead Reviewing Attorney: Marcus Chen, Esq. (m.chen@apexlegalsolutions.com)
+Supervising Partner: James Kowalski, Esq.
+Compliance Auditor: Bennett & Wolfe Compliance Advisors (Lead Auditor:
+Sandra Wolfe, CAMS)
+
+Client Contact: Amara Okoye, Chief Risk Officer, Orion Financial
+Client Address: 300 Wall Street Plaza, New York, NY 10005
+Client Phone: (212) 555-0729
+Client Email: a.okoye@orionfinancial.com
+
+SCOPE OF AUDIT
+This audit evaluated Orion Financial's Bank Secrecy Act (BSA) and AML
+compliance program, including customer due diligence (CDD) procedures,
+suspicious activity report (SAR) filing practices, and transaction
+monitoring systems, in connection with Orion Financial's expanded
+investment relationship with Horizon Capital (Contract Number CN-70218,
+referenced in shareholder_meeting_minutes.txt).
+
+METHODOLOGY
+Bennett & Wolfe Compliance Advisors reviewed a sample of 1,240 transactions
+exceeding $10,000, conducted 22 employee interviews, and tested the
+effectiveness of Orion Financial's automated transaction monitoring
+system, "SentryWatch v4.2."
+
+COMPLIANCE FINDINGS
+1. SAR Filing Timeliness: 94% of SARs were filed within the required
+   30-day window under 31 U.S.C. § 5318(g); 6% (14 of 233 filings)
+   exceeded the deadline by an average of 4.2 days, constituting a
+   moderate compliance gap.
+2. Customer Due Diligence: Enhanced due diligence (EDD) files for 8 of
+   45 sampled high-risk customers were incomplete, missing beneficial
+   ownership verification documentation required under 31 C.F.R.
+   § 1010.230.
+3. Transaction Monitoring: SentryWatch v4.2 flagged 3,412 alerts during
+   the audit period; disposition review found appropriate escalation in
+   97% of cases, with 3% requiring supplemental documentation.
+4. Wire Transfer Screening: OFAC sanctions screening was found to be
+   functioning correctly across all sampled wire transactions; no
+   sanctioned-party matches identified.
+5. Training Records: 12% of relevant employees had not completed the
+   annual AML training refresher by the required December 31, 2025
+   deadline.
+
+RELEVANT STATUTES AND LEGAL REFERENCES
+- Bank Secrecy Act, 31 U.S.C. § 5311 et seq.
+- USA PATRIOT Act, Pub. L. No. 107-56
+- 31 C.F.R. Part 1010 (Financial Recordkeeping and Reporting)
+- FinCEN Customer Due Diligence Rule, 31 C.F.R. § 1010.230
+
+INVESTIGATION NOTES
+- Sandra Wolfe's audit report (Ref. BW-AML-2026-0091, dated February 20,
+  2026) recommends immediate remediation of the EDD documentation gaps,
+  noting that two of the eight incomplete files relate to accounts
+  associated with the Horizon Capital investment relationship and should
+  be prioritized given the elevated transaction volume.
+- Amara Okoye confirmed that a system upgrade to SentryWatch v5.0 is
+  scheduled for Q3 2026, which is expected to reduce false-positive
+  alert rates by an estimated 15%.
+- No SARs filed during the audit period were connected to any current
+  Apex Legal Solutions client matters; however, internal note flags
+  that continued monitoring is warranted given Orion Financial's growing
+  relationship with Horizon Capital.
+
+RISK ASSESSMENT
+Risk Level: MODERATE
+Likelihood of Regulatory Enforcement Action: Low-Moderate (20%)
+Estimated Remediation Cost: $340,000 (system upgrade and staffing)
+Potential Civil Money Penalty Exposure (if unaddressed): $75,000 - $250,000
+
+RECOMMENDATIONS
+1. Complete EDD documentation for all 8 flagged high-risk customer files
+   within 45 days.
+2. Implement automated tracking for SAR filing deadlines to eliminate
+   late filings.
+3. Mandate completion of overdue AML training for all affected employees
+   by April 30, 2026.
+4. Proceed with SentryWatch v5.0 upgrade as scheduled.
+5. Conduct follow-up audit in Q1 2027 to verify remediation effectiveness.
+
+ACTION ITEMS
+1. Amara Okoye to submit remediation plan to Marcus Chen by March 20, 2026.
+2. Bennett & Wolfe to conduct interim spot-check of EDD files by May 15, 2026.
+3. James Kowalski to advise on voluntary self-disclosure considerations
+   regarding the late-filed SARs.
+4. Schedule Q1 2027 follow-up audit engagement.
+
+UPCOMING DEADLINES
+- EDD Remediation Deadline: April 15, 2026
+- Overdue Training Completion Deadline: April 30, 2026
+- SentryWatch v5.0 Upgrade Target: September 30, 2026
+- Follow-up Audit: February 2027
+
+NEXT REVIEW DATE: May 1, 2026
+STATUS: ACTIVE - REMEDIATION IN PROGRESS
+
+END OF DOCUMENT

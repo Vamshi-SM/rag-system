@@ -1,0 +1,102 @@
+APEX LEGAL SOLUTIONS - ENVIRONMENTAL & REGULATORY PRACTICE GROUP
+ENVIRONMENTAL COMPLIANCE REPORT
+CONFIDENTIAL - PREPARED FOR INTERNAL REVIEW
+
+Matter Number: MAT-2026-0389
+Case ID: ENV-COMP-2214
+Client ID: CLI-10077 (Vertex Manufacturing)
+Facility: Vertex Manufacturing - Riverbend Production Plant
+Facility Address: 8800 Industrial Loop, Gary, IN 46402
+Regulatory Agencies Involved: U.S. Environmental Protection Agency (EPA),
+Indiana Department of Environmental Management (IDEM)
+Report Date: March 12, 2026
+
+Reviewing Attorney: David Okafor, Esq. (d.okafor@apexlegalsolutions.com)
+Supervising Partner: Priya Sharma, Esq.
+Environmental Consultant: Marissa Blake, Cornerstone Environmental Group
+
+Client Contact: Robert Hayes, Plant Manager, Vertex Manufacturing
+Client Phone: (219) 555-0463
+Client Email: r.hayes@vertexmanufacturing.com
+
+BACKGROUND
+Vertex Manufacturing's Riverbend Production Plant is subject to a National
+Pollutant Discharge Elimination System (NPDES) permit (Permit No.
+IN0043218) issued under the Clean Water Act. Following a routine IDEM
+inspection on January 28, 2026, the facility received a Notice of
+Violation (NOV No. IDEM-NOV-2026-0091) citing elevated levels of total
+suspended solids (TSS) in wastewater discharge exceeding permitted limits
+on four occasions between October 2025 and January 2026.
+
+COMPLIANCE FINDINGS
+1. TSS levels recorded at 58 mg/L, 62 mg/L, 71 mg/L, and 66 mg/L against
+   a permitted daily maximum of 45 mg/L (Outfall 002).
+2. Root cause investigation by Cornerstone Environmental Group identified
+   a malfunctioning sediment filtration unit installed in 2019 as the
+   primary contributor.
+3. No exceedances identified at Outfall 001 or Outfall 003.
+4. Facility's Spill Prevention, Control, and Countermeasure (SPCC) Plan
+   was last updated in 2022 and is due for its five-year review by
+   September 2027; no deficiencies noted in current SPCC audit.
+5. Air emissions permit (Title V Permit No. TV-IN-88452) remains in good
+   standing; no exceedances reported for calendar year 2025.
+
+RELEVANT STATUTES AND LEGAL REFERENCES
+- Clean Water Act, 33 U.S.C. § 1251 et seq.
+- 40 C.F.R. Part 122 (NPDES Permit Program)
+- Indiana Code Title 13 (Environmental Statutes)
+- Resource Conservation and Recovery Act (RCRA), 42 U.S.C. § 6901 et seq.
+
+INVESTIGATION NOTES
+- Marissa Blake's report (Ref. CEG-2026-0341, dated February 20, 2026)
+  recommends immediate replacement of the sediment filtration unit at an
+  estimated cost of $185,000, with installation completion targeted for
+  May 15, 2026.
+- Robert Hayes confirmed interim measures, including increased manual
+  sediment removal and reduced production throughput on the affected
+  line, were implemented February 5, 2026, resulting in TSS levels
+  returning to compliance (38 mg/L recorded February 28, 2026).
+- IDEM has indicated it may pursue a civil penalty in the range of
+  $15,000 - $40,000 per violation day under Indiana Code § 13-30-4,
+  though settlement discussions are ongoing.
+- This is Vertex Manufacturing's second NOV in three years; the prior
+  NOV (2023) related to unpermitted stormwater discharge and resulted in
+  a $22,000 settlement.
+
+RISK ASSESSMENT
+Risk Level: MODERATE-HIGH
+Likelihood of Formal Enforcement Action: Moderate (45%)
+Estimated Penalty Exposure: $60,000 - $160,000
+Estimated Remediation Cost: $185,000
+Reputational Risk: Moderate, given repeat violation history
+
+RECOMMENDATIONS
+1. Proceed with expedited replacement of sediment filtration unit.
+2. Submit corrective action plan to IDEM by April 1, 2026, per NOV
+   response requirements.
+3. Negotiate consent agreement with IDEM to resolve penalty exposure
+   before formal enforcement proceedings commence.
+4. Conduct facility-wide audit of all filtration and monitoring equipment
+   across Vertex Manufacturing's four Midwest facilities by Q4 2026.
+5. Update SPCC Plan ahead of scheduled 2027 review to incorporate lessons
+   learned from this incident.
+
+ACTION ITEMS
+1. David Okafor to draft corrective action plan response by March 25, 2026.
+2. Robert Hayes to confirm filtration unit installation timeline with
+   vendor by March 20, 2026.
+3. Priya Sharma to initiate settlement discussions with IDEM counsel by
+   April 5, 2026.
+4. Marissa Blake to provide follow-up compliance monitoring report by
+   June 1, 2026.
+
+UPCOMING DEADLINES
+- Corrective Action Plan Due to IDEM: April 1, 2026
+- Filtration Unit Installation Target: May 15, 2026
+- Follow-up IDEM Inspection (anticipated): July 2026
+- Settlement Negotiation Target: June 30, 2026
+
+NEXT REVIEW DATE: May 1, 2026
+STATUS: ACTIVE - CORRECTIVE ACTION IN PROGRESS
+
+END OF DOCUMENT

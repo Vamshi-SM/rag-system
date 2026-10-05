@@ -259,25 +259,32 @@ class VectorStore:
         k = int(top_k or self.default_top_k)
 
         if self.is_postgres:
-            rows = self.database.query(
-                f"""
-                SELECT
-                    id,
-                    chunk_id,
-                    document_id,
-                    text,
-                    metadata,
-                    embedding <=> %s::vector AS distance
-                FROM {CHUNKS_TABLE}
-                ORDER BY embedding <=> %s::vector
-                LIMIT %s
-                """,
-                (
-                    query_embedding,
-                    query_embedding,
-                    k,
-                ),
-            )
+            # HNSW is approximate: its candidate beam (hnsw.ef_search,
+            # server default 40) must far exceed the requested limit, or
+            # true neighbors get silently dropped - measured on this corpus
+            # the default beam missed exact rank-1 chunks. A generous floor
+            # costs only a few ms at this corpus size.
+            with self.database.transaction() as conn:
+                conn.execute(f"SET LOCAL hnsw.ef_search = {max(500, 2 * k)}")
+                rows = conn.execute(
+                    f"""
+                    SELECT
+                        id,
+                        chunk_id,
+                        document_id,
+                        text,
+                        metadata,
+                        embedding <=> %s::vector AS distance
+                    FROM {CHUNKS_TABLE}
+                    ORDER BY embedding <=> %s::vector
+                    LIMIT %s
+                    """,
+                    (
+                        query_embedding,
+                        query_embedding,
+                        k,
+                    ),
+                ).fetchall()
         else:
             rows = self.database.query(
                 f"""
@@ -363,6 +370,11 @@ class VectorStore:
         for row in rows:
             rank = row["rank"] if row["rank"] is not None else 0.0
             similarity = 1.0 / (1.0 + abs(float(rank)))
+            metadata = (
+                row["metadata"]
+                if isinstance(row["metadata"], dict)
+                else json.loads(row["metadata"])
+            )
             results.append(
                 {
                     "id": row["id"],

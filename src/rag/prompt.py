@@ -7,6 +7,7 @@ never hallucinates beyond what was actually retrieved.
 
 from __future__ import annotations
 
+from src.config import settings
 from src.retrieval.retriever import RetrievedChunk
 
 SYSTEM_INSTRUCTIONS = (
@@ -31,22 +32,53 @@ Question
 {user_question}"""
 
 
+def _trim(text: str, limit: int) -> str:
+    """Trim text to ~limit chars, preferring a sentence boundary."""
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    dot = cut.rfind(". ")
+    if dot > limit * 0.5:
+        return cut[: dot + 1]
+    return cut
+
+
 def format_context(chunks: list[RetrievedChunk]) -> str:
     """Render retrieved chunks into a numbered, source-attributed context block.
 
     Each chunk is labeled with its filename and page (when known) so
     the LLM's answer can be traced back to a source, and so
     ``response.py`` can independently reconstruct the sources list.
+
+    Token-budget aware: chunks are trimmed to
+    ``prompt_max_chunk_chars`` and the whole context stops at
+    ``prompt_max_context_chars`` — Gemini prefill time scales with
+    input tokens, and 5 full 700-token chunks measurably add seconds.
+    The highest-ranked chunk keeps the most text; supporting chunks
+    yield first.
     """
     if not chunks:
         return "(no relevant context was found)"
 
+    max_chunk = settings.prompt_max_chunk_chars
+    max_total = settings.prompt_max_context_chars
+
     blocks: list[str] = []
+    total = 0
     for index, chunk in enumerate(chunks, start=1):
+        text = _trim(chunk["text"].strip(), max_chunk)
+        headroom = max_total - total
+        if headroom <= 0 and blocks:
+            break
+        if len(text) > headroom:
+            if headroom < 400:
+                break
+            text = _trim(text, headroom)
         filename = chunk["metadata"].get("filename", "unknown source")
         page = chunk["metadata"].get("page")
         location = f"{filename}, page {page}" if page is not None else filename
-        blocks.append(f"[{index}] ({location})\n{chunk['text'].strip()}")
+        blocks.append(f"[{index}] ({location})\n{text}")
+        total += len(text)
 
     return "\n\n".join(blocks)
 

@@ -8,6 +8,7 @@ reimplement anything - it composes ``BaseEmbedding`` and
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, TypedDict
 
 from src.embeddings.base_embedding import BaseEmbedding, EmbeddingError
@@ -56,8 +57,9 @@ def _fuse_rrf(
     ``cosine_similarity`` field so the retriever can apply a cosine-based
     similarity threshold on its original [0, 1] scale — RRF scores are tiny
     (~1/60) and would make a cosine threshold reject everything. Chunks that
-    only appeared in the keyword list carry their normalized BM25 similarity
-    as both ``similarity`` and ``cosine_similarity``.
+    only appeared in the keyword list have ``cosine_similarity`` unset (None):
+    there is no cosine measurement for them, and the retriever's threshold
+    filter lets them through.
 
     Returns results sorted by descending fused RRF score.
     """
@@ -74,9 +76,12 @@ def _fuse_rrf(
         key = result["id"]
         rrf_score = 1.0 / (RRF_K + rank)
         if key not in fused:
-            # Only-keyword hit: use its normalized BM25 similarity as the
-            # cosine proxy for thresholding.
-            fused[key] = {"result": result, "rrf": 0.0, "cosine": result["similarity"]}
+            # Only-keyword hit: it has no cosine measurement (BM25 lives on
+            # a different scale), so leave cosine_similarity unset — the
+            # retriever's threshold filter lets None through. Substituting
+            # the normalized BM25 score here would get keyword-only chunks
+            # killed by a cosine threshold they were never measured against.
+            fused[key] = {"result": result, "rrf": 0.0, "cosine": None}
         fused[key]["rrf"] += rrf_score
 
     ordered = sorted(fused.values(), key=lambda item: item["rrf"], reverse=True)
@@ -118,12 +123,28 @@ class Retriever:
         default_top_k: int = 5,
         default_similarity_threshold: float = 0.7,
         candidate_multiplier: int = 4,
+        reranker: Any | None = None,
+        rerank_top_n: int = 20,
     ) -> None:
         self.embedder = embedder
         self.vector_store = vector_store
         self.default_top_k = default_top_k
         self.default_similarity_threshold = default_similarity_threshold
         self.candidate_multiplier = max(1, candidate_multiplier)
+        # Optional cross-encoder reranker (e.g. CrossEncoderReranker).
+        # When set, the fused candidates are rescored by (query, chunk)
+        # relevance before the final top-k cut.
+        self.reranker = reranker
+        self.rerank_top_n = max(1, int(rerank_top_n))
+
+    def _run_keyword_search(self, keyword_fn, question: str, candidate_k: int) -> list:
+        """Run the keyword search leg (executed on a worker thread so it
+        overlaps with the query-embedding network call).
+
+        Raises whatever keyword_fn raises; the caller treats keyword
+        failures as best-effort and degrades to vector-only.
+        """
+        return list(keyword_fn(question, limit=candidate_k))
 
     def retrieve_with_scores(
         self,
@@ -132,6 +153,7 @@ class Retriever:
         similarity_threshold: float | None = None,
         metadata_filter: dict[str, Any] | None = None,
         filename: str | None = None,
+        candidate_k_override: int | None = None,
     ) -> list[RetrievedChunk]:
         """Retrieve the top-K most relevant chunks, with similarity scores.
 
@@ -166,13 +188,30 @@ class Retriever:
             if similarity_threshold is None
             else similarity_threshold
         )
-        candidate_k = k * self.candidate_multiplier if (metadata_filter or filename) else k
+        candidate_k = k * self.candidate_multiplier
+        if candidate_k_override is not None:
+            candidate_k = max(candidate_k, int(candidate_k_override))
+
+        # --- Sparse (keyword) search starts FIRST, in parallel ---
+        # Keyword search does not need the query embedding, and the embed
+        # call (network to Google) is the longest stage. Running them
+        # concurrently hides the keyword search entirely behind the embed.
+        keyword_results: list[SearchResult] = []
+        keyword_fn = getattr(self.vector_store, "keyword_search", None)
+        kw_executor = ThreadPoolExecutor(max_workers=1) if keyword_fn else None
+        kw_future = (
+            kw_executor.submit(self._run_keyword_search, keyword_fn, question, candidate_k)
+            if kw_executor
+            else None
+        )
 
         try:
             with measure("2. query embedding"):
                 query_embedding = self.embedder.embed(question)
         except EmbeddingError as exc:
             logger.error("Retrieval failed: could not embed question: %s", exc)
+            if kw_executor:
+                kw_executor.shutdown(wait=False, cancel_futures=True)
             raise RetrievalError(f"Could not embed question: {exc}") from exc
 
         # --- Dense (vector) search ---
@@ -186,21 +225,23 @@ class Retriever:
                 )
         except VectorStoreError as exc:
             logger.error("Retrieval failed: vector store search error: %s", exc)
+            if kw_executor:
+                kw_executor.shutdown(wait=False, cancel_futures=True)
             raise RetrievalError(f"Vector store search failed: {exc}") from exc
 
-        # --- Sparse (keyword) search, fused via Reciprocal Rank Fusion ---
-        # Keyword search is best-effort: if the FTS5 index is unavailable or
-        # the query fails, we degrade to pure-vector results rather than
+        # --- Collect the parallel keyword search ---
+        # Keyword search is best-effort: if the keyword index is unavailable
+        # or the query fails, we degrade to pure-vector results rather than
         # failing the whole retrieval.
-        keyword_results: list[SearchResult] = []
-        keyword_search = getattr(self.vector_store, "keyword_search", None)
-        if keyword_search is not None:
+        if kw_future is not None:
             try:
-                with measure("3b. keyword (FTS5) search"):
-                    keyword_results = keyword_search(question, limit=candidate_k)
+                with measure("3b. keyword search"):
+                    keyword_results = kw_future.result()
             except Exception as exc:  # noqa: BLE001 - keyword search must never break retrieval
                 logger.warning("Keyword search failed, using vector-only results: %s", exc)
                 keyword_results = []
+            finally:
+                kw_executor.shutdown(wait=False)
 
         with measure("4a. RRF fusion"):
             fused_results = _fuse_rrf(vector_results, keyword_results)
@@ -212,8 +253,11 @@ class Retriever:
         with measure("4b. filter + rank chunks"):
             filtered: list[RetrievedChunk] = []
             for result in fused_results:
-                cosine = result.get("cosine_similarity", result["similarity"])
-                if cosine < threshold:
+                cosine = result.get("cosine_similarity")
+                # None = keyword-only hit: no cosine measurement exists, so
+                # it bypasses the cosine threshold (BM25 already attests
+                # relevance by ranking). Docstring-promised behavior.
+                if cosine is not None and cosine < threshold:
                     continue
                 metadata = result["metadata"]
 
@@ -231,7 +275,21 @@ class Retriever:
             # RRF already returns a rank order, but filtering can drop entries,
             # so re-sort the surviving set by fused score for a stable top-k.
             filtered.sort(key=lambda chunk: chunk["score"], reverse=True)
-            top_results = filtered[:k]
+
+            # Optional cross-encoder rerank: rescore the surviving candidates
+            # by true (query, chunk) relevance before the final cut.
+            # Wrapped: an optional component must never break retrieval.
+            if self.reranker is not None and filtered:
+                with measure("4c. cross-encoder rerank"):
+                    try:
+                        top_results = self.reranker.rerank(question, filtered, k)
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning(
+                            "Reranker failed, keeping fusion order: %s", exc
+                        )
+                        top_results = filtered[:k]
+            else:
+                top_results = filtered[:k]
 
         logger.info(
             "Retrieved %d chunks for question "

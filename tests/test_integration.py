@@ -32,7 +32,7 @@ from src.vectordb.vector_store import VectorStore
 
 # 10 distinct topics, each rendered as its own multi-page PDF.
 _SAMPLE_PDF_CONTENT = [
-    ("refund_policy.pdf", "Refunds are available within 30 days of purchase for unused subscriptions."),
+    ("refund_policy.pdf", "Refund Policy: Refunds are available within 30 days of purchase for unused subscriptions."),
     ("pricing.pdf", "The Pro plan costs $49 per month and includes unlimited document ingestion."),
     ("support_hours.pdf", "Support is available Monday through Friday, 9am to 6pm Eastern Time."),
     ("warranty.pdf", "Hardware warranty coverage extends for 12 months from the original purchase date."),

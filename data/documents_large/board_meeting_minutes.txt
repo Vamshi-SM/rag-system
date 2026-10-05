@@ -1,0 +1,151 @@
+NOVATECH SYSTEMS, INC.
+MINUTES OF THE MEETING OF THE BOARD OF DIRECTORS
+
+DOCUMENT NUMBER: DOC-BM-2024-1003
+DATE OF MEETING: October 3, 2024
+TIME: 9:00 AM - 11:30 AM Central Time
+LOCATION: NovaTech Systems Headquarters, 4400 Innovation Parkway, Suite 900,
+Chicago, IL 60601 (with remote participation via secure video conference)
+MATTER NUMBER (OUTSIDE COUNSEL REFERENCE): APX-2024-0201
+
+===============================================================================
+ATTENDANCE
+===============================================================================
+Directors Present:
+- Gregory Halvorsen, Chairman of the Board
+- Michael Anders, Chief Financial Officer and Director
+- Nicole Farrow, Independent Director
+- Dr. Samuel Ibe, Independent Director
+- Patricia Alvarez, Independent Director
+- Wen Zhao, Director (Chief Executive Officer)
+
+Directors Absent: None
+
+Also Present (Non-Voting):
+- Lisa Manning, Director of Human Resources
+- James Thornton, Esq., Outside Counsel, Apex Legal Solutions
+- Rachel Kim, Esq., Outside Counsel, Apex Legal Solutions
+- Corporate Secretary: Angela Ford
+
+A quorum was confirmed present. Chairman Gregory Halvorsen called the
+meeting to order at 9:04 AM.
+
+-------------------------------------------------------------------------------
+I. APPROVAL OF PRIOR MINUTES
+-------------------------------------------------------------------------------
+The minutes of the September 5, 2024 special meeting of the Board were
+reviewed and unanimously approved without amendment.
+
+-------------------------------------------------------------------------------
+II. CFO FINANCIAL UPDATE
+-------------------------------------------------------------------------------
+Michael Anders presented the Q3 2024 financial results. Revenue for the
+quarter was $61.4 million, representing 8% year-over-year growth.
+Michael Anders noted that the pending litigation matter against GreenStone
+Logistics Corp. (Case ID LC-2045) remains reserved on the balance sheet
+at $2.1 million, consistent with outside counsel's risk assessment
+provided by Apex Legal Solutions on September 11, 2024.
+
+-------------------------------------------------------------------------------
+III. PROJECT PHOENIX - PROPOSED ACQUISITION OF BLUEPEAK SOFTWARE, INC.
+-------------------------------------------------------------------------------
+James Thornton, Esq. presented a summary of the due diligence findings
+and definitive agreement terms for the proposed acquisition of BluePeak
+Software, Inc. (see Due Diligence Report, Matter Number APX-2024-0201,
+dated September 20, 2024, and Merger & Acquisition Review Memorandum of
+even date herewith).
+
+Key points presented to the Board:
+1. Purchase price of $128,000,000, subject to working capital adjustment.
+2. Financing consisting of $60,000,000 cash on hand and a $70,000,000
+   term loan facility with Orion Financial.
+3. All six closing conditions identified in due diligence have been
+   satisfied as of the date of this meeting, including resolution of the
+   security incident remediation item (Finding DD-011) and the Texas
+   Attorney General inquiry (Finding DD-008).
+4. Sterling Consulting's fairness opinion, delivered October 1, 2024,
+   concluding the purchase price is fair to NovaTech Systems from a
+   financial point of view.
+
+Nicole Farrow asked about the open-source licensing issue identified in
+due diligence (Finding DD-006). James Thornton confirmed that a 90-day
+post-closing remediation plan is in place and that the risk is covered
+by the transaction's indemnification and escrow provisions.
+
+Dr. Samuel Ibe inquired about integration timeline and retention of key
+BluePeak Software personnel, including CEO Robert Nakamura. Lisa Manning
+confirmed that a $2,400,000 retention bonus pool has been structured for
+12 key employees, with agreements to be finalized before closing.
+
+RESOLVED: Upon motion duly made by Patricia Alvarez and seconded by
+Dr. Samuel Ibe, the Board unanimously approved the Stock Purchase
+Agreement for the acquisition of BluePeak Software, Inc. on the terms
+presented, and authorized Michael Anders and Wen Zhao to execute all
+documents necessary to consummate the transaction, with closing targeted
+for October 31, 2024.
+
+-------------------------------------------------------------------------------
+IV. LITIGATION UPDATE - NOVATECH SYSTEMS V. GREENSTONE LOGISTICS CORP.
+-------------------------------------------------------------------------------
+James Thornton provided an update on Case ID LC-2045, pending before
+Hon. Margaret Ellison in the U.S. District Court for the Northern
+District of Illinois. He reported that cross-motions for summary
+judgment were filed on January 15, 2025 (note: this update was previewed
+to the Board based on anticipated filings, as the litigation team's
+strategy memo had been circulated in advance of this meeting) and that
+mediation in January 2025 did not result in settlement, with GreenStone
+Logistics' final offer of $1.2 million rejected as inadequate relative to
+the $4,010,000 damages figure calculated by the client's retained expert,
+Dr. Helena Marsh.
+
+Wen Zhao asked whether the litigation posed any risk to the BluePeak
+Software transaction, given that GreenStone Logistics is also a customer
+of BluePeak Software under Contract No. BP-GS-2021-0056. James Thornton
+confirmed the two matters are unrelated and that GreenStone Logistics
+had already consented to the change of control under that contract on
+September 30, 2024.
+
+The Board took no action on this item and directed management to continue
+monitoring the litigation.
+
+-------------------------------------------------------------------------------
+V. COMPLIANCE AND REGULATORY MATTERS
+-------------------------------------------------------------------------------
+Lisa Manning briefed the Board on a general compliance training rollout
+scheduled for Q1 2025 across all departments, referencing the updated
+Corporate Policy Manual (Document Number DOC-CPM-2024-005) recently
+finalized by Apex Legal Solutions' corporate advisory team.
+
+-------------------------------------------------------------------------------
+VI. OTHER BUSINESS
+-------------------------------------------------------------------------------
+Gregory Halvorsen noted that the next regular quarterly Board meeting is
+scheduled for January 9, 2025. A special meeting may be called prior to
+that date if needed to address closing matters for Project Phoenix.
+
+-------------------------------------------------------------------------------
+VII. ADJOURNMENT
+-------------------------------------------------------------------------------
+There being no further business, the meeting was adjourned at 11:27 AM
+upon motion by Nicole Farrow, seconded by Patricia Alvarez.
+
+Respectfully submitted,
+
+Angela Ford
+Corporate Secretary, NovaTech Systems, Inc.
+
+Minutes Approved By: Gregory Halvorsen, Chairman of the Board
+Date of Approval: October 3, 2024 (approved at meeting; formal signature
+obtained October 7, 2024)
+
+-------------------------------------------------------------------------------
+DISTRIBUTION LIST
+-------------------------------------------------------------------------------
+- All Directors
+- Michael Anders, CFO
+- Wen Zhao, CEO
+- James Thornton, Esq., Apex Legal Solutions (Matter Number APX-2024-0201)
+- Rachel Kim, Esq., Apex Legal Solutions (Matter Number APX-2024-0201)
+- Corporate Secretary file (retained under Document Number DOC-BM-2024-1003)
+
+END OF DOCUMENT - DOC-BM-2024-1003

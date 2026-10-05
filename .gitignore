@@ -30,3 +30,6 @@ data/processed/
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated reports
+/reports/

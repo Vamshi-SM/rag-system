@@ -1,0 +1,105 @@
+APEX LEGAL SOLUTIONS
+EMPLOYMENT DISPUTE CASEFILE
+CONFIDENTIAL - ATTORNEY-CLIENT PRIVILEGED
+
+Matter Number: MAT-2026-0512
+Case ID: EMP-DISP-3387
+Client ID: CLI-10044 (BluePeak Software)
+Claimant: Rachel Simmons, former Senior Product Manager
+Respondent: BluePeak Software, Inc.
+Filing Agency: California Civil Rights Department (CRD)
+CRD Charge Number: CRD-2026-118820
+Court (if litigated): Superior Court of California, County of Santa Clara
+Case Caption (anticipated): Simmons v. BluePeak Software, Inc.
+
+Assigned Partner: Priya Sharma, Esq. (p.sharma@apexlegalsolutions.com)
+Associate Attorney: David Okafor, Esq. (d.okafor@apexlegalsolutions.com)
+Paralegal: Kevin Marsh
+
+Client Contact: Linda Park, Director of Human Resources, BluePeak Software
+Client Address: 220 Meridian Way, Austin, TX 78701
+Client Phone: (512) 555-0341
+Client Email: l.park@bluepeaksoftware.com
+
+NATURE OF DISPUTE
+Claimant Rachel Simmons alleges wrongful termination, retaliation, and
+gender-based pay discrimination in violation of the California Fair
+Employment and Housing Act (FEHA) and the federal Equal Pay Act, 29 U.S.C.
+§ 206(d). Simmons was terminated on January 9, 2026, approximately six
+weeks after filing an internal complaint regarding compensation disparity
+on the Project Ironclad compliance overhaul team.
+
+BACKGROUND
+1. Simmons joined BluePeak Software on May 3, 2021, as a Senior Product
+   Manager assigned to Project Ironclad.
+2. On November 20, 2025, Simmons submitted an internal complaint to HR
+   (Ref. HR-COMP-2025-0977) alleging pay disparity relative to a male
+   colleague in an equivalent role.
+3. Linda Park initiated an internal review; findings (dated December 18,
+   2025) identified a $14,200 annual salary gap not fully explained by
+   performance ratings or tenure.
+4. Simmons was terminated on January 9, 2026, cited for "restructuring of
+   the Project Ironclad team."
+5. Two other employees on the same team, including Employee ID EMP-30291
+   (name withheld per settlement), were retained.
+
+KEY PERSONNEL
+- Rachel Simmons, Claimant
+- Linda Park, Director of HR, BluePeak Software
+- Carlos Mendez, VP of Engineering, BluePeak Software - Simmons' direct manager
+- Priya Sharma, Esq., Apex Legal Solutions - lead counsel for BluePeak
+- David Okafor, Esq., Apex Legal Solutions - associate counsel
+- Angela Foster, Esq., Foster & Reyes LLP - counsel for Claimant Simmons
+
+RELEVANT STATUTES AND LEGAL REFERENCES
+- California Fair Employment and Housing Act, Cal. Gov. Code § 12940 et seq.
+- California Equal Pay Act, Cal. Lab. Code § 1197.5
+- Federal Equal Pay Act, 29 U.S.C. § 206(d)
+- Title VII of the Civil Rights Act of 1964, 42 U.S.C. § 2000e
+
+INVESTIGATION NOTES
+- Kevin Marsh compiled compensation data for all Project Ironclad team
+  members from 2022-2025 (Exhibit B, spreadsheet ref COMP-DATA-0217).
+- Interview with Carlos Mendez conducted February 14, 2026; Mendez stated
+  the restructuring decision was made independently of the HR complaint,
+  though internal Slack records show discussion of Simmons' complaint on
+  the same day the restructuring list was finalized (December 22, 2025).
+- This overlap in timing has been flagged as a significant litigation risk.
+- Right-to-sue letter issued by CRD on March 5, 2026; 12-month statute of
+  limitations for civil action runs through March 5, 2027.
+
+RISK ASSESSMENT
+Risk Level: HIGH
+Likelihood of Adverse Verdict if Litigated: 55-60%
+Estimated Exposure (damages, back pay, attorney fees): $650,000 - $1,100,000
+Recommended Settlement Range: $275,000 - $400,000
+
+INTERNAL NOTES
+Priya Sharma noted in the March 10, 2026 case review that the temporal
+proximity between the HR complaint and termination, combined with the
+Slack message timeline, creates a strong inference of retaliation under
+FEHA. Recommend pursuing early mediation rather than proceeding to
+litigation given reputational risk to BluePeak Software, particularly as
+BluePeak is currently negotiating a services contract with Sterling
+Consulting (Contract Number CN-55190) that includes standard employment
+practices representations.
+
+ACTION ITEMS
+1. David Okafor to prepare mediation brief by April 15, 2026.
+2. Kevin Marsh to finalize compensation exhibit binder by April 5, 2026.
+3. Priya Sharma to contact Angela Foster to schedule mediation before
+   May 30, 2026.
+4. Linda Park to provide updated personnel file and performance reviews
+   for Simmons by March 28, 2026.
+5. Review BluePeak's compensation policy for FEHA compliance gaps -
+   coordinate with legal_risk_assessment.txt findings.
+
+UPCOMING DEADLINES
+- Mediation Session: June 10, 2026
+- Statute of Limitations for Civil Filing: March 5, 2027
+- Document Production Deadline (if litigated): September 1, 2026
+
+NEXT REVIEW DATE: May 15, 2026
+STATUS: ACTIVE - PRE-LITIGATION / MEDIATION PHASE
+
+END OF DOCUMENT
